@@ -1,0 +1,12 @@
+#app-container {
+  display: flex;
+  flex-direction: column;
+
+  height: 100%;
+  width: 100%;
+}
+
+#app-container .leaflet-container {
+  height: calc(100% - 36px);
+  width: 100%;
+}
