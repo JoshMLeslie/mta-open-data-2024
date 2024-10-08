@@ -1,5 +1,6 @@
 interface CustomEventMap {
 	'date-update': CustomEvent<string>;
+	'modal-message': CustomEvent<string>;
 }
 declare global {
 	interface Document {

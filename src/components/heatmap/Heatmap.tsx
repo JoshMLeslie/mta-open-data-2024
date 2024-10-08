@@ -6,7 +6,7 @@ import Parser from 'papaparse';
 import { HeatLayerData } from '../../@types/leaflet-plugins';
 import '../../plugins/heatmap';
 import heatLayer from '../../plugins/heatmap';
-import { onDateUpdate } from '../../util/events';
+import { dispatchModalMessage, onDateUpdate } from '../../util/events';
 
 // where data: {location: ratePer100000}
 type DateDatum = {[location: string]: number};
@@ -111,8 +111,14 @@ const InitHeatMap = async (map: L.Map): Promise<void> => {
 			if (heatMapLayer !== null) {
 				(heatMapLayer as L.Layer).removeFrom(map);
 			}
+			
 			const useDateData = dateData.find((d) => d.date === targetDate);
-			if (!useDateData) return;
+			console.log(useDateData)
+			if (!useDateData) {
+				dispatchModalMessage("No data for selected date.");
+				return;
+			}
+
 			const heatData = dataToHeatMap(useDateData, geoData);
 			heatMapLayer = heatLayer(heatData, {
 				radius: 50,

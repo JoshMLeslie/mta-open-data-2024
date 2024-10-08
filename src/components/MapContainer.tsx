@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import InitHeatMap from './heatmap/Heatmap';
 
+const INIT_ZOOM = 11;
 const MAX_ZOOM = 13;
 const nycCenter: LatLngExpression = [40.73061, -73.935242];
-
 
 const MapContent = ({ready}: {ready: boolean}) => {
 	const map = useMap();
@@ -17,12 +17,10 @@ const MapContent = ({ready}: {ready: boolean}) => {
 	}, [map, ready]);
 
 	return (
-		<>
-			<TileLayer
-				attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-			/>
-		</>
+		<TileLayer
+			attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+		/>
 	);
 };
 
@@ -31,7 +29,8 @@ export const MapWrapper = () => {
 	return (
 		<MapContainer
 			center={nycCenter}
-			zoom={MAX_ZOOM}
+			maxZoom={MAX_ZOOM}
+			zoom={INIT_ZOOM}
 			scrollWheelZoom={true}
 			whenReady={() => setReady(true)}
 		>

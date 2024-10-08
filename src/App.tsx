@@ -1,7 +1,18 @@
-import { Slider, SliderValueLabelProps, Stack, Tooltip } from '@mui/material';
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Slider,
+  SliderValueLabelProps,
+  Stack,
+  Tooltip
+} from '@mui/material';
 import 'leaflet/dist/leaflet.css';
-import { useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import './App.css';
+import { AttachedModal } from './components/AttachedModal';
 import { MapWrapper } from './components/MapContainer';
 import { createWeeklyDates } from './util/date-generator';
 import { dispatchDateUpdate } from './util/events';
@@ -21,7 +32,12 @@ const MapAnimator = () => {
 	const animationIntervalId = useRef<NodeJS.Timer>();
 	const [dateIndexAnimation, setAnimationIndex] = useState(0);
 
-	const startInterval = () => {
+	const updateAnimationIndex = (index: number): void => {
+		setAnimationIndex(index);
+		dispatchDateUpdate(DateList[index]);
+	};
+
+	const startInterval = (): void => {
 		animationIntervalId.current = setInterval(() => {
 			setAnimationIndex((index) => {
 				console.log(index);
@@ -32,11 +48,11 @@ const MapAnimator = () => {
 		}, 1000);
 	};
 
-	const stopInterval = () => {
+	const stopInterval = (): void => {
 		clearInterval(animationIntervalId.current);
 	};
 
-	const toggleAnimation = () => {
+	const toggleAnimation = (): void => {
 		if (isAnimationRunning) {
 			setAnimationRunning(false);
 			stopInterval();
@@ -46,28 +62,52 @@ const MapAnimator = () => {
 		}
 	};
 
-	const handleDateSlider = (_: Event, newValue: number | number[]) => {
+	const handleDateSlider = (_: Event, newValue: number | number[]): void => {
 		const useValue = typeof newValue === 'number' ? newValue : 0;
-		setAnimationIndex(useValue);
-		dispatchDateUpdate(DateList[useValue]);
+		updateAnimationIndex(useValue);
+	};
+
+	const handleDateSelect = (
+		newValue: SelectChangeEvent<string>,
+		_: ReactNode
+	): void => {
+		const useValue = newValue.target.value;
+		const index = DateList.findIndex((item) => item === useValue);
+		updateAnimationIndex(index);
 	};
 
 	return (
-		<Stack spacing={2} direction="row" sx={{mb: 1}} alignItems="center">
+		<Stack spacing={2} direction="row" sx={{padding: 1}} alignItems="center">
 			<button type="button" onClick={toggleAnimation}>
 				Start/Stop
 			</button>
 			<Slider
 				value={dateIndexAnimation}
 				onChange={handleDateSlider}
-        valueLabelDisplay='auto'
+				valueLabelDisplay="auto"
 				slots={{
 					valueLabel: ValueLabelComponent,
 				}}
 				marks={true}
 				max={DateList.length - 1}
 			/>
-			<span style={{fontSize: '24px'}}>{DateList[dateIndexAnimation]}</span>
+
+			<FormControl sx={{width: 180}}>
+				<InputLabel>Selected Date</InputLabel>
+				<Select
+					labelId="demo-simple-select-label"
+					id="demo-simple-select"
+					value={DateList[dateIndexAnimation]}
+					label="Selected Date"
+					onChange={handleDateSelect}
+				>
+					{DateList.map((date) => (
+						<MenuItem value={date} key={date}>
+							{date}
+						</MenuItem>
+					))}
+				</Select>
+			</FormControl>
 		</Stack>
 	);
 };
@@ -77,6 +117,7 @@ function App() {
 		<div id="app-container">
 			<MapWrapper />
 			<MapAnimator />
+			<AttachedModal />
 		</div>
 	);
 }
