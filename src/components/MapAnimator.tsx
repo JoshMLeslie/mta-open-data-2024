@@ -26,7 +26,7 @@ function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 export const MapAnimator = () => {
 	const [isAnimationRunning, setAnimationRunning] = useState(false);
 	const animationIntervalId = useRef<NodeJS.Timer>();
-	const [dateIndexAnimation, setAnimationIndex] = useState(0);
+	const [dateIndex, setAnimationIndex] = useState(0);
 
 	const updateAnimationIndex = (index: number): void => {
 		setAnimationIndex(index);
@@ -78,7 +78,7 @@ export const MapAnimator = () => {
 				Start/Stop
 			</button>
 			<Slider
-				value={dateIndexAnimation}
+				value={dateIndex}
 				onChange={handleDateSlider}
 				valueLabelDisplay="auto"
 				slots={{
@@ -93,7 +93,7 @@ export const MapAnimator = () => {
 				<Select
 					labelId="demo-simple-select-label"
 					id="demo-simple-select"
-					value={DateList[dateIndexAnimation]}
+					value={DateList[dateIndex]}
 					label="Selected Date"
 					onChange={handleDateSelect}
 				>
