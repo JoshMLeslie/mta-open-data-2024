@@ -65,7 +65,7 @@ const MapAnimator = () => {
 					valueLabel: ValueLabelComponent,
 				}}
 				marks={true}
-				max={DateList.length}
+				max={DateList.length - 1}
 			/>
 			<span style={{fontSize: '24px'}}>{DateList[dateIndexAnimation]}</span>
 		</Stack>
