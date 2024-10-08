@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/mta-open-data-2024/static/css/main.8d52cb23.css",
+    "main.js": "/mta-open-data-2024/static/js/main.d9e3fb89.js",
+    "index.html": "/mta-open-data-2024/index.html",
+    "main.8d52cb23.css.map": "/mta-open-data-2024/static/css/main.8d52cb23.css.map",
+    "main.d9e3fb89.js.map": "/mta-open-data-2024/static/js/main.d9e3fb89.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8d52cb23.css",
+    "static/js/main.d9e3fb89.js"
+  ]
+}
