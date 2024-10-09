@@ -6,7 +6,7 @@ import Parser from 'papaparse';
 import { HeatMapData } from '../@types/leaflet-plugins';
 import '../plugins/heatmap';
 import { HeatLayerInstance } from '../plugins/heatmap';
-import heatlayer from "../plugins/raw-heatmap";
+import heatlayer from '../plugins/raw-heatmap';
 import {
 	dispatchModalMessage,
 	dispatchStopAnimation,
@@ -146,33 +146,6 @@ type HeatLayerRender = (
 	textbox: L.Control.TextBox
 ) => any;
 
-const updateLayer: HeatLayerRender = (
-	map,
-	targetDate,
-	heatMapLayer,
-	dateData,
-	geoData,
-	textbox
-) => {
-	const useDateData = dateData.find((d) => d.date === targetDate);
-	if (!useDateData) {
-		dispatchStopAnimation();
-		dispatchModalMessage('No data for selected date.');
-		return;
-	}
-
-	const {centersWithHeat, localMax} = dataToHeatMap(useDateData, geoData);
-	textbox.updateText('Max cases this week, per 100,000: ' + localMax);
-	if (heatMapLayer) {
-		heatMapLayer.setLatLngs(centersWithHeat);
-	} else {
-		heatMapLayer = heatlayer(centersWithHeat, {
-			radius: 50,
-			maxZoom: 13,
-		}).addTo(map);
-	}
-};
-
 const setupHeatLayer = (
 	map: L.Map,
 	dateData: DataByDate,
@@ -181,15 +154,29 @@ const setupHeatLayer = (
 	let heatMapLayer: HeatLayerInstance | null = null;
 	const textbox = createDateTextBox('', map);
 	const initDate = dateData[0].date;
-	return (targetDate?: string): HeatLayerRender =>
-		updateLayer(
-			map,
-			targetDate || initDate,
-			heatMapLayer,
-			dateData,
-			geoData,
-			textbox
+	return (targetDate?: string) => {
+		const useDateData = dateData.find(
+			(d) => d.date === (targetDate || initDate)
 		);
+		if (!useDateData) {
+			dispatchStopAnimation();
+			dispatchModalMessage('No data for selected date.');
+			return;
+		}
+
+		const {centersWithHeat, localMax} = dataToHeatMap(useDateData, geoData);
+		textbox.updateText('Max cases this week, per 100,000: ' + localMax);
+		if (heatMapLayer) {
+			heatMapLayer.setLatLngs(centersWithHeat);
+		} else {
+			const layer = heatlayer(centersWithHeat, {
+				radius: 50,
+				maxZoom: 13,
+			});
+			layer.addTo(map);
+			heatMapLayer = layer;
+		}
+	};
 };
 
 const InitHeatMap = async (map: L.Map): Promise<void> => {
