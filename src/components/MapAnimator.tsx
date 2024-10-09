@@ -1,13 +1,16 @@
 import {
 	Button,
+	ButtonGroup,
 	FormControl,
 	InputLabel,
+	InputProps,
 	MenuItem,
 	Select,
 	SelectChangeEvent,
 	Slider,
 	SliderValueLabelProps,
 	Stack,
+	TextField,
 	Tooltip,
 } from '@mui/material';
 import { ReactNode, useRef, useState } from 'react';
@@ -25,6 +28,7 @@ function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 }
 
 export const MapAnimator = () => {
+	const [playbackSpeed, setPlaybackSpeed] = useState(1);
 	const [isAnimationRunning, setAnimationRunning] = useState(false);
 	const animationIntervalId = useRef<NodeJS.Timer>();
 	const [dateIndex, setDateIndex] = useState(0);
@@ -73,7 +77,7 @@ export const MapAnimator = () => {
 		stopAnimation();
 		setDateIndex(0);
 		dispatchDateUpdate(DateList[0]);
-	}
+	};
 
 	const handleDateSlider = (_: Event, newValue: number | number[]): void => {
 		const useValue = typeof newValue === 'number' ? newValue : 0;
@@ -89,45 +93,98 @@ export const MapAnimator = () => {
 		updateAnimationIndex(index);
 	};
 
-	return (
-		<Stack spacing={2} direction="row" sx={{padding: 1}} alignItems="center">
-			<Button onClick={toggleAnimation} variant="outlined">
-				{isAnimationRunning ? 'Freeze' : 'Animate'}
-			</Button>
-			<Button
-				onClick={resetAnimation}
-				variant="outlined"
-				disabled={dateIndex === 0}
-			>
-				Reset
-			</Button>
-			<Slider
-				value={dateIndex}
-				onChange={handleDateSlider}
-				valueLabelDisplay="auto"
-				slots={{
-					valueLabel: ValueLabelComponent,
-				}}
-				marks={true}
-				max={DateList.length - 1}
-			/>
+	const handleSetPlaybackSpeed: InputProps['onChange'] = (e) => {
+		if (!isNaN(Number(e.target.value))) {
+			setPlaybackSpeed(Number(e.target.value));
+		}
+	};
+	const decreasePlaybackSpeed = () => {
+		setPlaybackSpeed((pbs) => {
+			if (pbs > 1) {
+				return pbs - 1;
+			} else {
+				return pbs - 0.125;
+			}
+		});
+	};
+	const increasePlaybackSpeed = () => {
+		setPlaybackSpeed((pbs) => pbs + 1);
+	};
 
-			<FormControl sx={{minWidth: 130}}>
-				<InputLabel>Selected Date</InputLabel>
-				<Select
-					labelId="demo-simple-select-label"
-					id="demo-simple-select"
-					value={DateList[dateIndex]}
-					label="Selected Date"
-					onChange={handleDateSelect}
+	return (
+		<Stack>
+			<Stack
+				spacing={2}
+				direction="row"
+				justifyContent="center"
+				alignItems="center"
+				padding={1}
+			>
+				<ButtonGroup>
+					<Button onClick={decreasePlaybackSpeed} variant="outlined">
+						-
+					</Button>
+					<TextField
+						label="Seconds per frame"
+						value={playbackSpeed}
+						onChange={handleSetPlaybackSpeed}
+						variant="outlined"
+						sx={{width: '140px'}}
+					/>
+					<Button onClick={increasePlaybackSpeed} variant="outlined">
+						+
+					</Button>
+				</ButtonGroup>
+				<Button
+					onClick={toggleAnimation}
+					variant="outlined"
+					sx={{height: '100%', minWidth: 'fit-content'}}
 				>
-					{DateList.map((date) => (
-						<MenuItem value={date} key={date}>
-							{date}
-						</MenuItem>
-					))}
-				</Select>
-			</FormControl>
+					{isAnimationRunning ? 'Freeze' : 'Animate'}
+				</Button>
+				<Button
+					onClick={resetAnimation}
+					variant="outlined"
+					disabled={dateIndex === 0}
+					sx={{height: '100%', minWidth: 'fit-content'}}
+				>
+					Reset
+				</Button>
+			</Stack>
+			<Stack
+				direction="row"
+				spacing={2}
+				justifyContent="center"
+				alignItems="center"
+				padding={1}
+			>
+				<Slider
+					sx={{display: {xs: 'none', sm: 'inline-block'}}}
+					value={dateIndex}
+					onChange={handleDateSlider}
+					valueLabelDisplay="auto"
+					slots={{
+						valueLabel: ValueLabelComponent,
+					}}
+					marks={true}
+					max={DateList.length - 1}
+				/>
+
+				<FormControl sx={{minWidth: '140px'}}>
+					<InputLabel>Selected Date</InputLabel>
+					<Select
+						value={DateList[dateIndex]}
+						label="Selected Date"
+						onChange={handleDateSelect}
+					>
+						{DateList.map((date) => (
+							<MenuItem value={date} key={date}>
+								{date}
+							</MenuItem>
+						))}
+					</Select>
+				</FormControl>
+			</Stack>
 		</Stack>
 	);
 };
