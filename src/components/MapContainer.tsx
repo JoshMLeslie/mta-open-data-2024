@@ -2,7 +2,7 @@ import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import InitHeatMap from './heatmap/Heatmap';
+import InitHeatMap from './Heatmap';
 
 const INIT_ZOOM = 11;
 const MAX_ZOOM = 13;

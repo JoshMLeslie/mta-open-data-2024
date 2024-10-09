@@ -1,12 +1,18 @@
 #app-container {
-  display: flex;
-  flex-direction: column;
+	display: flex;
+	flex-direction: column;
 
-  height: 100%;
-  width: 100%;
+	height: 100%;
+	width: 100%;
 }
 
 #app-container .leaflet-container {
-  height: calc(100% - 36px);
-  width: 100%;
+	height: calc(100% - 36px);
+	width: 100%;
+}
+
+#date-text {
+	background: white;
+	padding: 8px 16px;
+	border-radius: 8px;
 }

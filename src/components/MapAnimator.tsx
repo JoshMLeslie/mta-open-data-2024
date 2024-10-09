@@ -1,4 +1,5 @@
 import {
+	Button,
 	FormControl,
 	InputLabel,
 	MenuItem,
@@ -11,7 +12,7 @@ import {
 } from '@mui/material';
 import { ReactNode, useRef, useState } from 'react';
 import { createWeeklyDates } from '../util/date-generator';
-import { dispatchDateUpdate } from '../util/events';
+import { dispatchDateUpdate, onStopAnimation } from '../util/events';
 
 const DateList = createWeeklyDates('03/07/2020'); // hardcoded from NYC covid data
 
@@ -26,20 +27,26 @@ function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 export const MapAnimator = () => {
 	const [isAnimationRunning, setAnimationRunning] = useState(false);
 	const animationIntervalId = useRef<NodeJS.Timer>();
-	const [dateIndex, setAnimationIndex] = useState(0);
+	const [dateIndex, setDateIndex] = useState(0);
+
+	onStopAnimation(() => stopAnimation());
 
 	const updateAnimationIndex = (index: number): void => {
-		setAnimationIndex(index);
+		setDateIndex(index);
 		dispatchDateUpdate(DateList[index]);
 	};
 
 	const startInterval = (): void => {
 		animationIntervalId.current = setInterval(() => {
-			setAnimationIndex((index) => {
-				console.log(index);
-				const newIndex = index + 1;
-				dispatchDateUpdate(DateList[newIndex]);
-				return newIndex;
+			setDateIndex((index) => {
+				if (index < DateList.length - 1) {
+					const newIndex = index + 1;
+					dispatchDateUpdate(DateList[newIndex]);
+					return newIndex;
+				} else {
+					stopAnimation();
+					return index;
+				}
 			});
 		}, 1000);
 	};
@@ -48,15 +55,25 @@ export const MapAnimator = () => {
 		clearInterval(animationIntervalId.current);
 	};
 
-	const toggleAnimation = (): void => {
-		if (isAnimationRunning) {
-			setAnimationRunning(false);
-			stopInterval();
-		} else {
-			setAnimationRunning(true);
-			startInterval();
-		}
+	const startAnimation = () => {
+		setAnimationRunning(true);
+		startInterval();
 	};
+
+	const stopAnimation = () => {
+		setAnimationRunning(false);
+		stopInterval();
+	};
+
+	const toggleAnimation = (): void => {
+		isAnimationRunning ? stopAnimation() : startAnimation();
+	};
+
+	const resetAnimation = (): void => {
+		stopAnimation();
+		setDateIndex(0);
+		dispatchDateUpdate(DateList[0]);
+	}
 
 	const handleDateSlider = (_: Event, newValue: number | number[]): void => {
 		const useValue = typeof newValue === 'number' ? newValue : 0;
@@ -74,9 +91,16 @@ export const MapAnimator = () => {
 
 	return (
 		<Stack spacing={2} direction="row" sx={{padding: 1}} alignItems="center">
-			<button type="button" onClick={toggleAnimation}>
-				Start/Stop
-			</button>
+			<Button onClick={toggleAnimation} variant="outlined">
+				{isAnimationRunning ? 'Freeze' : 'Animate'}
+			</Button>
+			<Button
+				onClick={resetAnimation}
+				variant="outlined"
+				disabled={dateIndex === 0}
+			>
+				Reset
+			</Button>
 			<Slider
 				value={dateIndex}
 				onChange={handleDateSlider}
@@ -88,7 +112,7 @@ export const MapAnimator = () => {
 				max={DateList.length - 1}
 			/>
 
-			<FormControl sx={{width: 180}}>
+			<FormControl sx={{minWidth: 130}}>
 				<InputLabel>Selected Date</InputLabel>
 				<Select
 					labelId="demo-simple-select-label"

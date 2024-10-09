@@ -3,10 +3,15 @@
 import axios from 'axios';
 import L, { LatLngBoundsLiteral } from 'leaflet';
 import Parser from 'papaparse';
-import { HeatLayerData } from '../../@types/leaflet-plugins';
-import '../../plugins/heatmap';
-import heatLayer from '../../plugins/heatmap';
-import { dispatchModalMessage, onDateUpdate } from '../../util/events';
+import { HeatMapData } from '../@types/leaflet-plugins';
+import '../plugins/heatmap';
+import { HeatLayerInstance } from '../plugins/heatmap';
+import heatlayer from "../plugins/raw-heatmap";
+import {
+	dispatchModalMessage,
+	dispatchStopAnimation,
+	onDateUpdate,
+} from '../util/events';
 
 // where data: {location: ratePer100000}
 type DateDatum = {[location: string]: number};
@@ -78,7 +83,7 @@ const getGeoData = async (): Promise<CV19_GeoJSON | null> => {
 const dataToHeatMap = (
 	covidData: DateData,
 	geojsonData: CV19_GeoJSON
-): HeatLayerData => {
+): {centersWithHeat: HeatMapData; localMax: number} => {
 	const {data: selectedCovidData} = covidData;
 
 	const localMax = Object.values(selectedCovidData).reduce((max, current) => {
@@ -95,36 +100,111 @@ const dataToHeatMap = (
 		return [center.lng, center.lat, heat];
 	});
 
-	return centersWithHeat;
+	return {centersWithHeat, localMax};
+};
+
+/**
+ * @param map - adds to map, if provided
+ */
+const createDateTextBox = (
+	initText: string,
+	map?: L.Map
+): L.Control.TextBox => {
+	L.Control.TextBox = L.Control.extend<{
+		onAdd: () => void;
+		updateText: (text: string) => void;
+	}>({
+		onAdd: function () {
+			var text = L.DomUtil.create('div');
+			text.id = 'date-text';
+			text.innerHTML = initText;
+			return text;
+		},
+		updateText: function (text: string) {
+			const container = (this as any as L.Control).getContainer();
+			if (!container) return;
+			container.innerText = text;
+		},
+	});
+	const textbox = new L.Control.TextBox({position: 'bottomleft'});
+	if (map) {
+		textbox.addTo(map);
+	}
+	return textbox;
+};
+
+/**
+ * @param targetDate - format "DD/MM/YYYY"
+ */
+
+type HeatLayerRender = (
+	map: L.Map,
+	targetDate: string,
+	heatMapLayer: HeatLayerInstance | null,
+	dateData: DataByDate,
+	geoData: CV19_GeoJSON,
+	textbox: L.Control.TextBox
+) => any;
+
+const updateLayer: HeatLayerRender = (
+	map,
+	targetDate,
+	heatMapLayer,
+	dateData,
+	geoData,
+	textbox
+) => {
+	const useDateData = dateData.find((d) => d.date === targetDate);
+	if (!useDateData) {
+		dispatchStopAnimation();
+		dispatchModalMessage('No data for selected date.');
+		return;
+	}
+
+	const {centersWithHeat, localMax} = dataToHeatMap(useDateData, geoData);
+	textbox.updateText('Max cases this week, per 100,000: ' + localMax);
+	if (heatMapLayer) {
+		heatMapLayer.setLatLngs(centersWithHeat);
+	} else {
+		heatMapLayer = heatlayer(centersWithHeat, {
+			radius: 50,
+			maxZoom: 13,
+		}).addTo(map);
+	}
+};
+
+const setupHeatLayer = (
+	map: L.Map,
+	dateData: DataByDate,
+	geoData: CV19_GeoJSON
+) => {
+	let heatMapLayer: HeatLayerInstance | null = null;
+	const textbox = createDateTextBox('', map);
+	const initDate = dateData[0].date;
+	return (targetDate?: string): HeatLayerRender =>
+		updateLayer(
+			map,
+			targetDate || initDate,
+			heatMapLayer,
+			dateData,
+			geoData,
+			textbox
+		);
 };
 
 const InitHeatMap = async (map: L.Map): Promise<void> => {
-	let heatMapLayer: L.Layer | null = null;
 	try {
 		const [dateData, geoData] = await Promise.all([
 			getDateData(),
 			getGeoData(),
 		]);
-		if (!dateData || !geoData) return;
-
+		if (!dateData?.length || !geoData) return;
+		const updateHeatLayer = setupHeatLayer(map, dateData, geoData);
+		// init first paint
+		updateHeatLayer();
+		// listen for updates
 		onDateUpdate(({detail: targetDate}) => {
-			if (heatMapLayer !== null) {
-				(heatMapLayer as L.Layer).removeFrom(map);
-			}
-			
-			const useDateData = dateData.find((d) => d.date === targetDate);
-			console.log(useDateData)
-			if (!useDateData) {
-				dispatchModalMessage("No data for selected date.");
-				return;
-			}
-
-			const heatData = dataToHeatMap(useDateData, geoData);
-			heatMapLayer = heatLayer(heatData, {
-				radius: 50,
-				maxZoom: 13,
-			});
-			heatMapLayer!.addTo(map);
+			updateHeatLayer(targetDate);
 		});
 	} catch (e) {
 		console.warn(e);

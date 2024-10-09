@@ -1,6 +1,7 @@
 /** Lat, Lng, Intensity: [0.0..1.0] */
-export type HeatLayerData = number[][];
-export type HeatLayerOptions = Partial<{
+export type HeatMapDatum = number[];
+export type HeatMapData = HeatMapDatum[];
+export type HeatMapOptions = Partial<{
 	/**
 	 * The radius of influence of each data point, in pixels.
 	 * @default 15
@@ -39,5 +40,5 @@ export type HeatLayerOptions = Partial<{
 
 declare namespace L {
 	function HeatLayer(...args: any[]): L.Class;
-	function heatLayer(t: HeatLayerData, i: HeatLayerOptions): L.Layer;
+	function heatLayer(t: HeatMapData, i: HeatMapOptions): L.Layer;
 }

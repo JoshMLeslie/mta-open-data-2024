@@ -1,17 +1,22 @@
 const eDATE_UPDATE = 'date-update';
 /** Date is in format of MM/DD/YYYY */
 export const dispatchDateUpdate = (date: string) => {
-	const eUPDATE_DATE = new CustomEvent(eDATE_UPDATE, {detail: date});
-	document.dispatchEvent(eUPDATE_DATE);
+	document.dispatchEvent(new CustomEvent(eDATE_UPDATE, {detail: date}));
 };
 /** Date is in format of MM/DD/YYYY */
 export const onDateUpdate = (callback: ({detail}: {detail: string}) => any) =>
-	document.addEventListener<typeof eDATE_UPDATE>(eDATE_UPDATE, callback);
+	document.addEventListener(eDATE_UPDATE, callback);
 
 const eMODAL_MSG = 'modal-message';
 export const dispatchModalMessage = (msg: string) => {
-	const eUPDATE_DATE = new CustomEvent(eMODAL_MSG, {detail: msg});
-	document.dispatchEvent(eUPDATE_DATE);
+	document.dispatchEvent(new CustomEvent(eMODAL_MSG, {detail: msg}));
 };
 export const onModalMessage = (callback: ({detail}: {detail: string}) => any) =>
-	document.addEventListener<typeof eMODAL_MSG>(eMODAL_MSG, callback);
+	document.addEventListener(eMODAL_MSG, callback);
+
+const eSTOP_ANIMATION = 'stop-animation';
+export const dispatchStopAnimation = () => {
+	document.dispatchEvent(new Event(eSTOP_ANIMATION));
+};
+export const onStopAnimation = (callback: () => any) =>
+	document.addEventListener(eSTOP_ANIMATION, callback);
