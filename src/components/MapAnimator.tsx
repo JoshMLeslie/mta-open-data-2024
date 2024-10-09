@@ -116,6 +116,7 @@ export const MapAnimator = () => {
 	const resetAnimation = (): void => {
 		stopAnimation();
 		setDateIndex(0);
+		setPlaybackSpeedText('1');
 		dispatchDateUpdate(DateList[0]);
 	};
 
