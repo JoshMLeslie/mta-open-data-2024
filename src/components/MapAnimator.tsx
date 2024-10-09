@@ -13,9 +13,13 @@ import {
 	TextField,
 	Tooltip,
 } from '@mui/material';
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { createWeeklyDates } from '../util/date-generator';
-import { dispatchDateUpdate, onStopAnimation } from '../util/events';
+import {
+	dispatchDateUpdate,
+	dispatchModalMessage,
+	onStopAnimation,
+} from '../util/events';
 
 const DateList = createWeeklyDates('03/07/2020'); // hardcoded from NYC covid data
 
@@ -28,45 +32,81 @@ function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 }
 
 export const MapAnimator = () => {
-	const [playbackSpeed, setPlaybackSpeed] = useState(1);
+	const [playbackSpeedText, setPlaybackSpeedText] = useState('1');
 	const [isAnimationRunning, setAnimationRunning] = useState(false);
-	const animationIntervalId = useRef<NodeJS.Timer>();
 	const [dateIndex, setDateIndex] = useState(0);
+	const lastPbs = useRef(playbackSpeedText);
+	const animationIdRef = useRef<number | null>(null);
+	const lastAnimationRef = useRef(0);
 
 	onStopAnimation(() => stopAnimation());
+
+	const requestFrame = () => {
+		animationIdRef.current = requestAnimationFrame((time) => animate(time));
+	};
+
+	// cycle animation is playback speed changes
+	useEffect(() => {
+		if (
+			isAnimationRunning &&
+			lastPbs.current !== playbackSpeedText &&
+			animationIdRef.current
+		) {
+			lastPbs.current = playbackSpeedText;
+			cancelAnimationFrame(animationIdRef.current);
+			requestFrame();
+		}
+	}, [playbackSpeedText]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const animate = (timestamp: number): void => {
+		if (isNaN(Number(playbackSpeedText))) {
+			stopAnimation();
+			dispatchModalMessage('Playbackspeed must be a valid number');
+			return;
+		}
+		if (dateIndex < DateList.length - 1) {
+			requestFrame(); // always request a new frame since we're not done animating yet
+			const elapsedTime = timestamp - lastAnimationRef.current;
+			const timeThreshold = Math.pow(Number(playbackSpeedText), -1) * 1000;
+
+			if (elapsedTime < timeThreshold) {
+				return;
+			}
+			setDateIndex((idx) => {
+				const newIndex = idx + 1;
+				dispatchDateUpdate(DateList[newIndex]);
+				return newIndex;
+			});
+			lastAnimationRef.current = timestamp;
+		} else {
+			stopAnimation();
+		}
+	};
 
 	const updateAnimationIndex = (index: number): void => {
 		setDateIndex(index);
 		dispatchDateUpdate(DateList[index]);
 	};
 
-	const startInterval = (): void => {
-		animationIntervalId.current = setInterval(() => {
-			setDateIndex((index) => {
-				if (index < DateList.length - 1) {
-					const newIndex = index + 1;
-					dispatchDateUpdate(DateList[newIndex]);
-					return newIndex;
-				} else {
-					stopAnimation();
-					return index;
-				}
-			});
-		}, 1000);
+	const startAnimation = (): void => {
+		if (Number(playbackSpeedText) <= 0) {
+			alert('Playback speed must be greater than 0');
+			return;
+		}
+		if (!isAnimationRunning) {
+			lastAnimationRef.current = performance.now();
+			setAnimationRunning(true);
+			requestFrame();
+		}
 	};
-
-	const stopInterval = (): void => {
-		clearInterval(animationIntervalId.current);
-	};
-
-	const startAnimation = () => {
-		setAnimationRunning(true);
-		startInterval();
-	};
-
-	const stopAnimation = () => {
-		setAnimationRunning(false);
-		stopInterval();
+	const stopAnimation = (): void => {
+		if (isAnimationRunning || animationIdRef.current) {
+			setAnimationRunning(false);
+			if (animationIdRef.current) {
+				cancelAnimationFrame(animationIdRef.current);
+			}
+			animationIdRef.current = null;
+		}
 	};
 
 	const toggleAnimation = (): void => {
@@ -94,21 +134,31 @@ export const MapAnimator = () => {
 	};
 
 	const handleSetPlaybackSpeed: InputProps['onChange'] = (e) => {
-		if (!isNaN(Number(e.target.value))) {
-			setPlaybackSpeed(Number(e.target.value));
-		}
+		setPlaybackSpeedText(e.target.value);
 	};
+
+	// Adjust playback speed. PBS >= 1, adjust by 1. PBS < 1, adjust by 0.125.
+	// Prevents non-positive values.
 	const decreasePlaybackSpeed = () => {
-		setPlaybackSpeed((pbs) => {
-			if (pbs > 1) {
-				return pbs - 1;
-			} else {
-				return pbs - 0.125;
+		setPlaybackSpeedText((pbs) => {
+			const useVal = Number(pbs);
+			if (isNaN(useVal)) {
+				return '1';
 			}
+			if (useVal === 0.125) {
+				return pbs;
+			}
+			return `${useVal - (useVal > 1 ? 1 : 0.125)}`;
 		});
 	};
 	const increasePlaybackSpeed = () => {
-		setPlaybackSpeed((pbs) => pbs + 1);
+		setPlaybackSpeedText((pbs) => {
+			const useVal = Number(pbs);
+			if (isNaN(useVal)) {
+				return '1';
+			}
+			return `${useVal + (useVal >= 1 ? 1 : 0.125)}`;
+		});
 	};
 
 	return (
@@ -125,8 +175,8 @@ export const MapAnimator = () => {
 						-
 					</Button>
 					<TextField
-						label="Seconds per frame"
-						value={playbackSpeed}
+						label="Frames per Second"
+						value={playbackSpeedText}
 						onChange={handleSetPlaybackSpeed}
 						variant="outlined"
 						sx={{width: '140px'}}

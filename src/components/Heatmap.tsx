@@ -8,9 +8,8 @@ import '../plugins/heatmap';
 import { HeatLayerInstance } from '../plugins/heatmap';
 import heatlayer from '../plugins/raw-heatmap';
 import {
-	dispatchModalMessage,
 	dispatchStopAnimation,
-	onDateUpdate,
+	onDateUpdate
 } from '../util/events';
 
 // where data: {location: ratePer100000}
@@ -133,18 +132,9 @@ const createDateTextBox = (
 	return textbox;
 };
 
-/**
- * @param targetDate - format "DD/MM/YYYY"
- */
-
-type HeatLayerRender = (
-	map: L.Map,
-	targetDate: string,
-	heatMapLayer: HeatLayerInstance | null,
-	dateData: DataByDate,
-	geoData: CV19_GeoJSON,
-	textbox: L.Control.TextBox
-) => any;
+const updateTextBox = (tb: L.Control.TextBox, value: string) => {
+	tb.updateText('Max cases this week, per 100,000: ' + value)
+}
 
 const setupHeatLayer = (
 	map: L.Map,
@@ -159,13 +149,18 @@ const setupHeatLayer = (
 			(d) => d.date === (targetDate || initDate)
 		);
 		if (!useDateData) {
-			dispatchStopAnimation();
-			dispatchModalMessage('No data for selected date.');
+			const pauseOnNoData = false;
+			if (pauseOnNoData) {
+				// todo
+				dispatchStopAnimation();
+			}
+			updateTextBox(textbox, 'NO DATA');
+			heatMapLayer?.setLatLngs([])
 			return;
 		}
 
 		const {centersWithHeat, localMax} = dataToHeatMap(useDateData, geoData);
-		textbox.updateText('Max cases this week, per 100,000: ' + localMax);
+		updateTextBox(textbox, localMax.toString());
 		if (heatMapLayer) {
 			heatMapLayer.setLatLngs(centersWithHeat);
 		} else {
