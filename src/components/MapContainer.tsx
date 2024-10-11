@@ -2,6 +2,7 @@ import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { getWeekDataByDate } from '../util/mta-api';
 import InitHeatMap from './Heatmap';
 
 const INIT_ZOOM = 11;
@@ -15,6 +16,10 @@ const MapContent = ({ready}: {ready: boolean}) => {
 			InitHeatMap(map);
 		}
 	}, [map, ready]);
+
+	useEffect(() => {
+		getWeekDataByDate(new Date("03/07/2020"));
+	},[])
 
 	return (
 		<TileLayer
