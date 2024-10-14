@@ -204,6 +204,12 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
     }
 });
 
+/**
+ * 
+ * @param {HeatMapData} latlngs 
+ * @param {HeatMapOptions} options 
+ * @returns HeatLayerInstance
+ */
 export default function heatlayer (latlngs, options) {
     return new L.HeatLayer(latlngs, options);
 };
