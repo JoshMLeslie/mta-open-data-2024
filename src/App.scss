@@ -5,13 +5,16 @@
 	height: 100%;
 	width: 100%;
 }
+#app-container #map-wrapper {
+	height: 100%;
 
-#app-container .leaflet-container {
-	height: calc(100% - 36px);
-	width: 100%;
+	.leaflet-container {
+		height: calc(100% - 36px);
+		width: 50%;
+	}
 }
 
-#date-text {
+.heatmap-textbox {
 	background: white;
 	padding: 8px 16px;
 	border-radius: 8px;

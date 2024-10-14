@@ -5,7 +5,7 @@ import {
 	ListItem,
 	Modal,
 	Stack,
-	Typography
+	Typography,
 } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import { useState } from 'react';
@@ -114,7 +114,8 @@ function App() {
 				>
 					<Typography align="left">
 						This app compares COVID_19 rates against MTA ridership data between
-						START and END. Data is from the NYC Department of Health (DOH) and
+						March 2020 and Today (or until they stop updating the respective
+						data). Data is from the NYC Department of Health (DOH) and
 						Metropolitan Transportation Authority (MTA). See modals for further
 						info.
 					</Typography>
@@ -127,12 +128,14 @@ function App() {
 						<Button
 							onClick={() => setCovidModalOpen(true)}
 							sx={{minWidth: 'fit-content'}}
+							variant='outlined'
 						>
 							COVID Data Info
 						</Button>
 						<Button
 							onClick={() => setMTAModalOpen(true)}
 							sx={{minWidth: 'fit-content'}}
+							variant='outlined'
 						>
 							Ridership Data Info
 						</Button>
