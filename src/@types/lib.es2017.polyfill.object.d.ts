@@ -1,3 +1,3 @@
 interface ObjectConstructor {
-	entries<K, V>(o: {[s: K]: V}): [K, V][];
+	entries<K, V>(o: Record<K, V>): [K, V][];
 }
