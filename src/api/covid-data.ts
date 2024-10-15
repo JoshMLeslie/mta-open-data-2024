@@ -19,14 +19,15 @@ export interface ModzctaProps {
 	label: string; // e.g. '10001, 10118';
 }
 
+export interface CV19_GeoJSON_Feature {
+	type: 'Feature';
+	id: string;
+	properties: ModzctaProps;
+	geometry: ModzctaGeometry;
+}
 export interface CV19_GeoJSON {
 	type: 'FeatureCollection';
-	features: Array<{
-		type: 'Feature';
-		id: string;
-		properties: ModzctaProps;
-		geometry: ModzctaGeometry;
-	}>;
+	features: CV19_GeoJSON_Feature[];
 }
 
 export const getDateData = async (): Promise<DataByDate> => {

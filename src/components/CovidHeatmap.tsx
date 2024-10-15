@@ -1,6 +1,7 @@
 // adapted from https://handsondataviz.org/leaflet-heatmap.html
 
-import L from 'leaflet';
+import L, { LatLngLiteral } from 'leaflet';
+import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import { HeatMapData } from '../@types/leaflet-plugins';
 import {
 	CV19_GeoJSON,
@@ -14,28 +15,69 @@ import { HeatLayerInstance } from '../plugins/heatmap';
 import heatlayer from '../plugins/raw-heatmap';
 import { dispatchStopAnimation, onDateUpdate } from '../util/events';
 
+interface WeeklyCaseZipMax {
+	value: number;
+	zipcodes: Record<string, LatLngLiteral>;
+}
+
+const getWeeklyCaseZipMax = (selectedCovidData: DateData['data']) =>
+	Object.entries<string, number>(selectedCovidData).reduce<WeeklyCaseZipMax>(
+		(maximums, [zip, zipCaseCount]) => {
+			if (!/\d{5}/.test(zip)) {
+				// data additionally contains city and borough values
+				return maximums;
+			}
+
+			const newMaxCount = Math.max(maximums.value, zipCaseCount);
+			if (newMaxCount === 0) {
+				return maximums;
+			}
+			if (newMaxCount !== maximums.value) {
+				// if max has changed, reset obj to new max
+				maximums = {
+					value: newMaxCount,
+					zipcodes: {},
+				};
+			}
+			if (newMaxCount === zipCaseCount) {
+				maximums.zipcodes[zip] = {lat: 0, lng: 0};
+			}
+			return maximums;
+		},
+		{value: 0, zipcodes: {}}
+	);
+
 const dataToHeatMap = (
 	covidData: DateData,
 	geojsonData: CV19_GeoJSON
-): {centersWithHeat: HeatMapData; weeklyMax: number} => {
+): {
+	centersWithHeat: HeatMapData;
+	weeklyCaseZipMax: WeeklyCaseZipMax;
+} => {
 	const {data: selectedCovidData} = covidData;
 
-	const weeklyMax = Object.values(selectedCovidData).reduce((max, current) => {
-		return Math.max(max, current);
-	}, 0);
+	const weeklyCaseZipMax = getWeeklyCaseZipMax(selectedCovidData);
 
 	const centersWithHeat = geojsonData.features.map((feature) => {
-		const center = L.polygon(feature.geometry.coordinates)
+		const {MODZCTA} = feature.properties;
+		const {lng, lat} = L.polygon(feature.geometry.coordinates)
 			.getBounds()
 			.getCenter();
-		const {MODZCTA} = feature.properties;
-		const heat = selectedCovidData[MODZCTA] / weeklyMax || 0;
+
+		if (weeklyCaseZipMax.zipcodes[MODZCTA]) {
+			weeklyCaseZipMax.zipcodes[MODZCTA] = {
+				lat,
+				lng,
+			};
+		}
+
+		const heat = selectedCovidData[MODZCTA] / weeklyCaseZipMax.value || 0;
+
 		// flip because NYC uses lng,lat vs lat,lng
-		const {lng, lat} = center;
 		return [lng, lat, heat];
 	});
 
-	return {centersWithHeat, weeklyMax};
+	return {centersWithHeat, weeklyCaseZipMax};
 };
 
 /**
@@ -80,6 +122,8 @@ const setupHeatLayer = (
 	geoData: CV19_GeoJSON
 ) => {
 	let heatMapLayer: HeatLayerInstance | null = null;
+	let weeklyMaxLocLayer: L.LayerGroup | null = null;
+
 	const textbox = createDateTextBox('', map);
 	const initDate = dateData[0].date;
 	return (targetDate?: string) => {
@@ -89,7 +133,7 @@ const setupHeatLayer = (
 		if (!useDateData) {
 			const pauseOnNoData = false;
 			if (pauseOnNoData) {
-				// todo
+				// todo?
 				dispatchStopAnimation();
 			}
 			textbox.updateText('NO DATA');
@@ -97,10 +141,38 @@ const setupHeatLayer = (
 			return;
 		}
 
-		const {centersWithHeat, weeklyMax} = dataToHeatMap(useDateData, geoData);
-		textbox.updateText(
-			'Max cases this week, per 100,000: ' + weeklyMax.toString()
+		if (weeklyMaxLocLayer) {
+			weeklyMaxLocLayer.removeFrom(map);
+			weeklyMaxLocLayer = null;
+		}
+
+		const {centersWithHeat, weeklyCaseZipMax} = dataToHeatMap(
+			useDateData,
+			geoData
 		);
+
+		if (weeklyCaseZipMax.value) {
+			const markers = Object.entries(weeklyCaseZipMax.zipcodes).map(
+				([zipcode, zipData]) => {
+					const {lat, lng} = zipData;
+					// flip lat, lng from NYC data
+					return L.marker([lng, lat], {
+						icon: L.icon({
+							iconUrl: markerIconPng,
+						}),
+						title: 'Max case zipcode:' + zipcode,
+						zIndexOffset: 1000,
+					});
+				}
+			);
+
+			weeklyMaxLocLayer = L.layerGroup(markers).addTo(map);
+		}
+
+		textbox.updateText(
+			'Max cases this week, per 100,000: ' + weeklyCaseZipMax.value.toString()
+		);
+
 		if (heatMapLayer) {
 			heatMapLayer.setLatLngs(centersWithHeat);
 		} else {
