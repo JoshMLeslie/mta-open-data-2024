@@ -31,7 +31,7 @@ function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 	);
 }
 
-export const MapAnimator = () => {
+export const Animator = () => {
 	const [playbackSpeedText, setPlaybackSpeedText] = useState('1');
 	const [isAnimationRunning, setAnimationRunning] = useState(false);
 	const [dateIndex, setDateIndex] = useState(0);

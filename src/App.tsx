@@ -2,8 +2,8 @@ import { Button, Stack, Typography } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import { useState } from 'react';
 import './App.scss';
+import { Animator } from './components/Animator';
 import { AttachedModal } from './components/AttachedModal';
-import { MapAnimator } from './components/MapAnimator';
 import { MapWrapper } from './components/MapContainer';
 import CovidDataInfoDialog from './components/dialogs/CovidDataInfo.dialog';
 import MTADataInfoDialog from './components/dialogs/MTADataInfo.dialog';
@@ -49,7 +49,7 @@ function App() {
 						</Button>
 					</Stack>
 				</Stack>
-				<MapAnimator />
+				<Animator />
 			</Stack>
 			<AttachedModal />
 			<CovidDataInfoDialog
