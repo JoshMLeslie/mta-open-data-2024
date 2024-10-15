@@ -1,21 +1,50 @@
 import { Stack } from '@mui/material';
-import { LatLngBoundsLiteral, LatLngExpression } from 'leaflet';
+import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { BAT_ID } from '../@types/mta-api';
-import { getWeekDataByDate, NYCBridgeAndTunnelBounds } from '../api/mta-api';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
+import { get2022Data } from '../api/mta-api';
+import boroughBoundaries from '../geojson/borough-boundaries.json';
 import InitCovidHeatMap from './CovidHeatmap';
+import InitMtaHeatMap from './MtaHeatmap';
 
 const INIT_ZOOM = 11;
-const MAX_ZOOM = 13;
+const MAX_ZOOM = 15;
 const nycCenter: LatLngExpression = [40.73061, -73.935242];
 
-const CovidMapContent = ({ready}: {ready: boolean}) => {
-	const map = useMap();
+type SetMap = (key: string, map: L.Map) => void;
+interface SiblingMaps {
+	covid?: L.Map;
+	mta?: L.Map;
+}
+interface MapContentProps {
+	ready: boolean;
+	setMap: SetMap;
+	siblingMaps: SiblingMaps;
+}
+
+const addBoroughs = (map: L.Map): void => {
+	new L.GeoJSON(boroughBoundaries as any).addTo(map);
+};
+
+const CovidMapContent: React.FC<MapContentProps> = ({
+	ready,
+	setMap,
+	siblingMaps,
+}) => {
+	const map = useMapEvents({
+		drag: () => {
+			siblingMaps.mta?.setView(map.getCenter());
+		},
+		zoom: () => {
+			siblingMaps.mta?.setView(map.getCenter(), map.getZoom());
+		},
+	});
 	useEffect(() => {
 		if (ready) {
+			setMap('covid', map);
 			InitCovidHeatMap(map);
+			addBoroughs(map);
 		}
 	}, [map, ready]);
 
@@ -26,20 +55,33 @@ const CovidMapContent = ({ready}: {ready: boolean}) => {
 		/>
 	);
 };
-const MtaMapContent = ({ready}: {ready: boolean}) => {
-	const map = useMap();
+const MtaMapContent: React.FC<MapContentProps> = ({
+	ready,
+	setMap,
+	siblingMaps,
+}) => {
+	const map = useMapEvents({
+		drag: () => {
+			siblingMaps.covid?.setView(map.getCenter());
+		},
+		zoom: () => {
+			siblingMaps.covid?.setView(map.getCenter(), map.getZoom());
+		},
+		click: (e) => {
+			console.log(e.latlng);
+		},
+	});
 	useEffect(() => {
 		if (ready) {
-			Object.entries<BAT_ID, LatLngBoundsLiteral>(
-				NYCBridgeAndTunnelBounds
-			).forEach(([key, bound]) => {
-				new L.Polygon(bound).addTo(map);
-			});
+			setMap('mta', map);
+			(async function () {
+				InitMtaHeatMap(map, await get2022Data(new Date('2022-03-01')));
+			})();
 		}
 	}, [map, ready]);
 
 	useEffect(() => {
-		getWeekDataByDate(new Date('2020-03-07'));
+		// 	getWeekDataByDate(new Date('2020-03-07'));
 	}, []);
 
 	return (
@@ -53,6 +95,15 @@ const MtaMapContent = ({ready}: {ready: boolean}) => {
 export const MapWrapper = () => {
 	const [covidMapReady, setCovidMapReady] = useState(false);
 	const [mtaMapReady, setMtaMapReady] = useState(false);
+	const [maps, setMaps] = useState<SiblingMaps>({});
+
+	const setMap = (key: string, map: L.Map) => {
+		setMaps((prev) => ({
+			...prev,
+			[key]: map,
+		}));
+	};
+
 	return (
 		<Stack direction="row" id="map-wrapper">
 			<MapContainer
@@ -63,8 +114,13 @@ export const MapWrapper = () => {
 				scrollWheelZoom={true}
 				whenReady={() => setCovidMapReady(true)}
 			>
-				<CovidMapContent ready={covidMapReady} />
+				<CovidMapContent
+					ready={covidMapReady}
+					setMap={setMap}
+					siblingMaps={maps}
+				/>
 			</MapContainer>
+			<div id="map-sibling-vertical-divider"></div>
 			<MapContainer
 				id="ridership-data-map"
 				center={nycCenter}
@@ -73,7 +129,7 @@ export const MapWrapper = () => {
 				scrollWheelZoom={true}
 				whenReady={() => setMtaMapReady(true)}
 			>
-				<MtaMapContent ready={mtaMapReady} />
+				<MtaMapContent ready={mtaMapReady} setMap={setMap} siblingMaps={maps} />
 			</MapContainer>
 		</Stack>
 	);

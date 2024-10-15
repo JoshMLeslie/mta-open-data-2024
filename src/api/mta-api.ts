@@ -1,8 +1,39 @@
 import { LatLngBoundsLiteral } from 'leaflet';
-import { BAT_ID, BridgeAndTunnelData, BridgeAndTunnelRes } from '../@types/mta-api';
+import {
+	BAT_ID,
+	BridgeAndTunnelData,
+	BridgeAndTunnelRes,
+} from '../@types/mta-api';
 
 const weekInMs = 604799999; // (7 * 24 * 60 * 60 * 1000) - 1ms
 
+/** from NYC Data portal - https://data.cityofnewyork.us/City-Government/New-York-City-Population-by-Borough-1950-2040/xywu-7bv9/explore/query/SELECT%0A%20%20%60age_group%60%2C%0A%20%20%60borough%60%2C%0A%20%20%60_1950%60%2C%0A%20%20%60_1950_boro_share_of_nyc_total%60%2C%0A%20%20%60_1960%60%2C%0A%20%20%60_1960_boro_share_of_nyc_total%60%2C%0A%20%20%60_1970%60%2C%0A%20%20%60_1970_boro_share_of_nyc_total%60%2C%0A%20%20%60_1980%60%2C%0A%20%20%60_1980_boro_share_of_nyc_total%60%2C%0A%20%20%60_1990%60%2C%0A%20%20%60_1990_boro_share_of_nyc_total%60%2C%0A%20%20%60_2000%60%2C%0A%20%20%60_2000_boro_share_of_nyc_total%60%2C%0A%20%20%60_2010%60%2C%0A%20%20%60_2010_boro_share_of_nyc_total%60%2C%0A%20%20%60_2020%60%2C%0A%20%20%60_2020_boro_share_of_nyc_total%60%2C%0A%20%20%60_2030%60%2C%0A%20%20%60_2030_boro_share_of_nyc_total%60%2C%0A%20%20%60_2040%60%2C%0A%20%20%60_2040_boro_share_of_nyc_total%60/page/filter */
+export const boroughCensus2020 = [
+	{
+		borough: 'Total',
+		total: 8550971,
+	},
+	{
+		borough: 'Bronx',
+		total: 1446788,
+	},
+	{
+		borough: 'Brooklyn',
+		total: 2648452,
+	},
+	{
+		borough: 'Manhattan',
+		total: 1638281,
+	},
+	{
+		borough: 'Queens',
+		total: 2330295,
+	},
+	{
+		borough: 'Staten Island',
+		total: 487155,
+	},
+];
 
 const getBridgeAndTunnelTrafficDataUrl = (
 	startDate: string,
@@ -24,6 +55,11 @@ const getBridgeAndTunnelTrafficDataUrl = (
 	GROUP%20BY%20%60plaza_id%60%2C%20%60direction%60%0AORDER%20BY%20%60plaza_id%60%20ASC%20NULL%20LAST%0ALIMIT%20100%0AOFFSET%200&
 `;
 };
+
+const ridership2020ByWeekUrl = (startDate: string, endDate: string) =>
+	`https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20avg(%60entries%60)%20AS%20%60avg_entries%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%22${startDate}%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%22${endDate}%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%0AORDER%20BY%20%60station%60%20ASC%20NULL%20FIRST%2C%20%60line_name%60%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%200&`;
+const ridership2022ByWeekUrl = (startDate: string, endDate: string, offset = 0) =>
+	`https://data.ny.gov/resource/wujg-7c2s.json?$query=SELECT%0A%20%20%60station_complex_id%60%2C%0A%20%20%60station_complex%60%2C%0A%20%20%60georeference%60%2C%0A%20%20avg(%60ridership%60)%20AS%20%60avg_ridership%60%0AWHERE%0A%20%20%60transit_timestamp%60%0A%20%20%20%20BETWEEN%20%22${startDate}%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%22${endDate}%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station_complex_id%60%2C%20%60station_complex%60%2C%20%60georeference%60%0AORDER%20BY%0A%20%20%60station_complex_id%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60station_complex%60%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%20${offset}&`
 
 // ripped from MTA data portal
 export const BATNameMap: Record<BAT_ID, string> = {
@@ -160,3 +196,12 @@ export const getWeekDataByDate = async (
 			return v;
 		});
 };
+
+export const get2022Data = async (startDate: Date) => {
+	const endDate = new Date(startDate.getTime() + weekInMs);
+
+	const urlStartdate = encodeURIComponent(isoTimeNoMs(startDate));
+	const urlEndDate = encodeURIComponent(isoTimeNoMs(endDate));
+	console.log("todo offset-limit pagination stuff")
+	return fetch(ridership2022ByWeekUrl(urlStartdate, urlEndDate)).then(r => r.json())
+}

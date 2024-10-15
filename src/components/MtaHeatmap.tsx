@@ -2,39 +2,35 @@
 
 import L from 'leaflet';
 import { HeatMapData } from '../@types/leaflet-plugins';
-import {
-	CV19_GeoJSON,
-	DataByDate,
-	DateData,
-	getDateData,
-	getGeoData,
-} from '../api/covid-data';
+import { get2022Data } from '../api/mta-api';
 import '../plugins/heatmap';
 import { HeatLayerInstance } from '../plugins/heatmap';
 import heatlayer from '../plugins/raw-heatmap';
-import { dispatchStopAnimation, onDateUpdate } from '../util/events';
+import { onDateUpdate } from '../util/events';
+
+// based on the 2022 Data
+interface MTA_DATUM {
+	avg_ridership: string; // float string
+	georeference: {type: 'Point'; coordinates: number[]};
+	station_complex: string;
+	station_complex_id: string; // numeric string
+}
+
+type MTA_DATA = MTA_DATUM[];
 
 const dataToHeatMap = (
-	covidData: DateData,
-	geojsonData: CV19_GeoJSON
+	data: MTA_DATA
 ): {centersWithHeat: HeatMapData; weeklyMax: number} => {
-	const {data: selectedCovidData} = covidData;
-
-	const weeklyMax = Object.values(selectedCovidData).reduce((max, current) => {
-		return Math.max(max, current);
+	const weeklyMax = data.reduce((max, {avg_ridership}) => {
+		return Math.max(max, Number(avg_ridership));
 	}, 0);
 
-	const centersWithHeat = geojsonData.features.map((feature) => {
-		const center = L.polygon(feature.geometry.coordinates)
-			.getBounds()
-			.getCenter();
-		const {MODZCTA} = feature.properties;
-		const heat = selectedCovidData[MODZCTA] / weeklyMax || 0;
+	const centersWithHeat = data.map((d) => {
+		const heat = Number(d.avg_ridership) / weeklyMax || 0;
 		// flip because NYC uses lng,lat vs lat,lng
-		const {lng, lat} = center;
-		return [lng, lat, heat];
+		const [lng, lat] = d.georeference.coordinates;
+		return [lat, lng, heat];
 	});
-
 	return {centersWithHeat, weeklyMax};
 };
 
@@ -74,32 +70,13 @@ const createDateTextBox = (
 	return textbox;
 };
 
-const setupHeatLayer = (
-	map: L.Map,
-	dateData: DataByDate,
-	geoData: CV19_GeoJSON
-) => {
+const setupHeatLayer = (map: L.Map) => {
 	let heatMapLayer: HeatLayerInstance | null = null;
 	const textbox = createDateTextBox('', map);
-	const initDate = dateData[0].date;
-	return (targetDate?: string) => {
-		const useDateData = dateData.find(
-			(d) => d.date === (targetDate || initDate)
-		);
-		if (!useDateData) {
-			const pauseOnNoData = false;
-			if (pauseOnNoData) {
-				// todo
-				dispatchStopAnimation();
-			}
-			textbox.updateText('NO DATA');
-			heatMapLayer?.setLatLngs([]);
-			return;
-		}
-
-		const {centersWithHeat, weeklyMax} = dataToHeatMap(useDateData, geoData);
+	return (data: MTA_DATA) => {
+		const {centersWithHeat, weeklyMax} = dataToHeatMap(data);
 		textbox.updateText(
-			'Max cases this week, per 100,000: ' + weeklyMax.toString()
+			'Max ridership this week, per day: ' + weeklyMax.toString()
 		);
 		if (heatMapLayer) {
 			heatMapLayer.setLatLngs(centersWithHeat);
@@ -114,22 +91,19 @@ const setupHeatLayer = (
 	};
 };
 
-const InitCovidHeatMap = async (map: L.Map): Promise<void> => {
+const InitMtaHeatMap = (map: L.Map, data: MTA_DATA): void => {
 	try {
-		const [dateData, geoData] = await Promise.all([
-			getDateData(),
-			getGeoData(),
-		]);
-		if (!dateData?.length || !geoData) return;
-		const updateHeatLayer = setupHeatLayer(map, dateData, geoData);
+		const updateHeatLayer = setupHeatLayer(map);
 		// init first paint
-		updateHeatLayer();
+		updateHeatLayer(data);
 		// listen for updates
 		onDateUpdate(({detail: targetDate}) => {
-			updateHeatLayer(targetDate);
+			get2022Data(new Date(targetDate)).then((r) => {
+				updateHeatLayer(r);
+			});
 		});
 	} catch (e) {
 		console.warn(e);
 	}
 };
-export default InitCovidHeatMap;
+export default InitMtaHeatMap;

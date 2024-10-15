@@ -9,7 +9,7 @@
 	height: 100%;
 
 	.leaflet-container {
-		height: calc(100% - 36px);
+		height: 100%;
 		width: 50%;
 	}
 }
@@ -31,4 +31,10 @@
 		border: 2px solid #000;
 		padding: 8px 16px;
 	}
+}
+
+#map-sibling-vertical-divider {
+	height: 100%;
+	width: 8px;
+	background-color: black;
 }
