@@ -21,7 +21,17 @@ import {
 	onStopAnimation,
 } from '../util/events';
 
-const DateList = createWeeklyDates('03/07/2020'); // hardcoded from NYC covid data
+type UpdateAnimationIndex =
+	| {
+			index: number;
+			updateFn?: never;
+	  }
+	| {
+			index?: never;
+			updateFn: (index: number) => number;
+	  };
+
+const DateList = createWeeklyDates('03/07/2020'); // hardcoded from NYC covid data start date
 
 function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 	return (
@@ -45,7 +55,7 @@ export const Animator = () => {
 		animationIdRef.current = requestAnimationFrame((time) => animate(time));
 	};
 
-	// cycle animation is playback speed changes
+	// cycle animation as playback speed changes
 	useEffect(() => {
 		if (
 			isAnimationRunning &&
@@ -87,9 +97,20 @@ export const Animator = () => {
 		});
 	};
 
-	const updateAnimationIndex = (index: number): void => {
-		setDateIndex(index);
-		dispatchDateUpdate(DateList[index]);
+	const updateAnimationIndex = ({
+		index,
+		updateFn,
+	}: UpdateAnimationIndex): void => {
+		if (index) {
+			setDateIndex(index);
+			dispatchDateUpdate(DateList[index]);
+		} else if (updateFn) {
+			setDateIndex((index) => {
+				const newIndex = updateFn(index);
+				dispatchDateUpdate(DateList[newIndex]);
+				return newIndex;
+			});
+		}
 	};
 
 	const startAnimation = (): void => {
@@ -125,8 +146,8 @@ export const Animator = () => {
 	};
 
 	const handleDateSlider = (_: Event, newValue: number | number[]): void => {
-		const useValue = typeof newValue === 'number' ? newValue : 0;
-		updateAnimationIndex(useValue);
+		const index = typeof newValue === 'number' ? newValue : 0;
+		updateAnimationIndex({index});
 	};
 
 	const handleDateSelect = (
@@ -135,7 +156,7 @@ export const Animator = () => {
 	): void => {
 		const useValue = newValue.target.value;
 		const index = DateList.findIndex((item) => item === useValue);
-		updateAnimationIndex(index);
+		updateAnimationIndex({index});
 	};
 
 	const handleSetPlaybackSpeed: InputProps['onChange'] = (e) => {
@@ -180,66 +201,72 @@ export const Animator = () => {
 						-
 					</Button>
 					<TextField
-						label="Frames per Second"
+						label="FPS"
 						value={playbackSpeedText}
 						onChange={handleSetPlaybackSpeed}
 						variant="outlined"
-						sx={{width: '140px'}}
+						sx={{width: '80px'}}
 					/>
 					<Button onClick={increasePlaybackSpeed} variant="outlined">
 						+
 					</Button>
 				</ButtonGroup>
-				<Button
-					onClick={toggleAnimation}
-					variant="outlined"
-					sx={{height: '100%', minWidth: 'fit-content'}}
-				>
-					{isAnimationRunning ? 'Freeze' : 'Animate'}
-				</Button>
-				<Button
-					onClick={resetAnimation}
-					variant="outlined"
-					disabled={dateIndex === 0}
-					sx={{height: '100%', minWidth: 'fit-content'}}
-				>
-					Reset
-				</Button>
-			</Stack>
-			<Stack
-				direction="row"
-				spacing={2}
-				justifyContent="center"
-				alignItems="center"
-				padding={1}
-			>
-				<Slider
-					sx={{display: {xs: 'none', sm: 'inline-block'}}}
-					value={dateIndex}
-					onChange={handleDateSlider}
-					valueLabelDisplay="auto"
-					slots={{
-						valueLabel: ValueLabelComponent,
-					}}
-					marks={true}
-					max={DateList.length - 1}
-				/>
-
-				<FormControl sx={{minWidth: '140px'}}>
-					<InputLabel>Selected Date</InputLabel>
-					<Select
-						value={DateList[dateIndex]}
-						label="Selected Date"
-						onChange={handleDateSelect}
+				<ButtonGroup>
+					<Button
+						onClick={() => updateAnimationIndex({updateFn: (idx) => idx - 1})}
 					>
-						{DateList.map((date) => (
-							<MenuItem value={date} key={date}>
-								{date}
-							</MenuItem>
-						))}
-					</Select>
-				</FormControl>
+						Prev Date
+					</Button>
+					<FormControl sx={{minWidth: '140px'}}>
+						<InputLabel>Selected Date</InputLabel>
+						<Select
+							value={DateList[dateIndex]}
+							label="Selected Date"
+							onChange={handleDateSelect}
+						>
+							{DateList.map((date) => (
+								<MenuItem value={date} key={date}>
+									{date}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+					<Button
+						onClick={() => updateAnimationIndex({updateFn: (idx) => idx + 1})}
+					>
+						Next Date
+					</Button>
+				</ButtonGroup>
+
+				<ButtonGroup sx={{height: "100%"}}>
+					<Button
+						onClick={toggleAnimation}
+						variant="outlined"
+						sx={{height: '100%', minWidth: 'fit-content'}}
+					>
+						{isAnimationRunning ? 'Freeze' : 'Animate'}
+					</Button>
+					<Button
+						onClick={resetAnimation}
+						variant="outlined"
+						disabled={dateIndex === 0}
+						sx={{height: '100%', minWidth: 'fit-content'}}
+					>
+						Reset
+					</Button>
+				</ButtonGroup>
 			</Stack>
+			<Slider
+				sx={{display: {xs: 'none', sm: 'inline-block'}}}
+				value={dateIndex}
+				onChange={handleDateSlider}
+				valueLabelDisplay="auto"
+				slots={{
+					valueLabel: ValueLabelComponent,
+				}}
+				marks={true}
+				max={DateList.length - 1}
+			/>
 		</Stack>
 	);
 };
