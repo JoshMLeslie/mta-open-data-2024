@@ -64,23 +64,27 @@ export const MapAnimator = () => {
 			dispatchModalMessage('Playbackspeed must be a valid number');
 			return;
 		}
-		if (dateIndex < DateList.length - 1) {
-			requestFrame(); // always request a new frame since we're not done animating yet
-			const elapsedTime = timestamp - lastAnimationRef.current;
-			const timeThreshold = Math.pow(Number(playbackSpeedText), -1) * 1000;
+		const elapsedTime = timestamp - lastAnimationRef.current;
+		const timeThreshold = Math.pow(Number(playbackSpeedText), -1) * 1000;
 
-			if (elapsedTime < timeThreshold) {
-				return;
-			}
-			setDateIndex((idx) => {
+		if (elapsedTime < timeThreshold) {
+			requestFrame();
+			return;
+		}
+
+		lastAnimationRef.current = timestamp;
+		setDateIndex((idx) => {
+			if (idx < DateList.length - 1) {
+				requestFrame(); // always request a new frame since we're not done animating yet
 				const newIndex = idx + 1;
 				dispatchDateUpdate(DateList[newIndex]);
 				return newIndex;
-			});
-			lastAnimationRef.current = timestamp;
-		} else {
-			stopAnimation();
-		}
+			} else {
+				console.log('out of range, stopping');
+				stopAnimation();
+				return idx;
+			}
+		});
 	};
 
 	const updateAnimationIndex = (index: number): void => {
