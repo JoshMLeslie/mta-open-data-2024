@@ -1,104 +1,12 @@
-import {
-	Box,
-	Button,
-	List,
-	ListItem,
-	Modal,
-	Stack,
-	Typography,
-} from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import { useState } from 'react';
 import './App.scss';
 import { AttachedModal } from './components/AttachedModal';
 import { MapAnimator } from './components/MapAnimator';
 import { MapWrapper } from './components/MapContainer';
-
-const CovidDataInfoModal: React.FC<{
-	open: boolean;
-	onClose: () => void;
-}> = ({open, onClose}) => {
-	return (
-		<Modal
-			className="basic-modal"
-			title="COVID-19 Data"
-			open={open}
-			onClose={onClose}
-		>
-			<Box>
-				<List>
-					<ListItem sx={{display: 'block'}}>
-						COVID Heatmaps are generated based on{' '}
-						<a href="'https://raw.githubusercontent.com/nychealth/coronavirus-data/refs/heads/master/trends/caserate-by-modzcta.csv'">
-							NYC Health's Data
-						</a>
-						: the average number of cases per 100,000, per week.
-					</ListItem>
-					<ListItem>
-						Week to week may have different heatmap colors due to changes in the
-						number of cases and distributions.
-					</ListItem>
-					<ListItem>
-						Heatmaps may look less intense if there is a greater distribution.
-					</ListItem>
-					<ListItem sx={{display: 'block'}}>
-						Heatmaps are localized to match zip codes (in the format of{' '}
-						<a href="https://data.cityofnewyork.us/Health/Modified-Zip-Code-Tabulation-Areas-MODZCTA-/pri4-ifjk/about_data">
-							MODZCTA
-						</a>
-						).
-					</ListItem>
-					<ListItem>
-						Zooming-in provides higher fidelity of the 177 some-odd zip codes.
-					</ListItem>
-				</List>
-			</Box>
-		</Modal>
-	);
-};
-
-const MTADataInfoModal: React.FC<{
-	open: boolean;
-	onClose: () => void;
-}> = ({open, onClose}) => {
-	return (
-		<Modal
-			className="basic-modal"
-			title="MTA Ridership Data"
-			open={open}
-			onClose={onClose}
-		>
-			<Box>
-				<List>
-					<ListItem sx={{display: 'block'}}>
-						COVID Heatmaps are generated based on{' '}
-						<a href="'https://raw.githubusercontent.com/nychealth/coronavirus-data/refs/heads/master/trends/caserate-by-modzcta.csv'">
-							NYC Health's Data
-						</a>
-						: the average number of cases per 100,000, per week.
-					</ListItem>
-					<ListItem>
-						Week to week may have different heatmap colors due to changes in the
-						number of cases and distributions.
-					</ListItem>
-					<ListItem>
-						Heatmaps may look less intense if there is a greater distribution.
-					</ListItem>
-					<ListItem sx={{display: 'block'}}>
-						Heatmaps are localized to match zip codes (in the format of{' '}
-						<a href="https://data.cityofnewyork.us/Health/Modified-Zip-Code-Tabulation-Areas-MODZCTA-/pri4-ifjk/about_data">
-							MODZCTA
-						</a>
-						).
-					</ListItem>
-					<ListItem>
-						Zooming-in provides higher fidelity of the 177 some-odd zip codes.
-					</ListItem>
-				</List>
-			</Box>
-		</Modal>
-	);
-};
+import CovidDataInfoDialog from './components/dialogs/CovidDataInfo.dialog';
+import MTADataInfoDialog from './components/dialogs/MTADataInfo.dialog';
 
 function App() {
 	const [covidModalOpen, setCovidModalOpen] = useState(false);
@@ -128,14 +36,14 @@ function App() {
 						<Button
 							onClick={() => setCovidModalOpen(true)}
 							sx={{minWidth: 'fit-content'}}
-							variant='outlined'
+							variant="outlined"
 						>
 							COVID Data Info
 						</Button>
 						<Button
 							onClick={() => setMTAModalOpen(true)}
 							sx={{minWidth: 'fit-content'}}
-							variant='outlined'
+							variant="outlined"
 						>
 							Ridership Data Info
 						</Button>
@@ -144,11 +52,11 @@ function App() {
 				<MapAnimator />
 			</Stack>
 			<AttachedModal />
-			<CovidDataInfoModal
+			<CovidDataInfoDialog
 				open={covidModalOpen}
 				onClose={() => setCovidModalOpen(false)}
 			/>
-			<MTADataInfoModal
+			<MTADataInfoDialog
 				open={mtaModalOpen}
 				onClose={() => setMTAModalOpen(false)}
 			/>
