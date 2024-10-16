@@ -44,6 +44,11 @@ const monthLabels = [
 	'May',
 	'June',
 	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December'
 ];
 
 interface Turnstile2020Data {
