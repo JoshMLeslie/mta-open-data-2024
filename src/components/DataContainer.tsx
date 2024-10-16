@@ -6,7 +6,7 @@ import {
 	Legend,
 	LinearScale,
 	Title,
-	Tooltip
+	Tooltip,
 } from 'chart.js';
 import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import boroughBoundaries from '../geojson/borough-boundaries.json';
 import InitCovidHeatMap from './CovidHeatmap';
+import InfoContainer from './InfoContainer';
 import { MTAChart } from './MTAChart';
 
 ChartJS.register(
@@ -54,23 +55,27 @@ const CovidMapContent: React.FC<MapContentProps> = ({ready}) => {
 	);
 };
 
-export const MapWrapper = () => {
+const DataContainer = () => {
 	const [covidMapReady, setCovidMapReady] = useState(false);
 
 	return (
-		<Stack direction="row" id="map-wrapper">
-			<MapContainer
-				id="covid-data-map"
-				center={nycCenter}
-				maxZoom={MAX_ZOOM}
-				zoom={INIT_ZOOM}
-				scrollWheelZoom={true}
-				whenReady={() => setCovidMapReady(true)}
-			>
-				<CovidMapContent ready={covidMapReady} />
-			</MapContainer>
-			<div id="map-sibling-vertical-divider"></div>
+		<div id="data-container">
+			<Stack direction="row" gap={2}>
+				<MapContainer
+					id="covid-data-map"
+					center={nycCenter}
+					maxZoom={MAX_ZOOM}
+					zoom={INIT_ZOOM}
+					scrollWheelZoom={true}
+					whenReady={() => setCovidMapReady(true)}
+				>
+					<CovidMapContent ready={covidMapReady} />
+				</MapContainer>
+				<InfoContainer />
+			</Stack>
 			<MTAChart />
-		</Stack>
+		</div>
 	);
 };
+
+export default DataContainer;

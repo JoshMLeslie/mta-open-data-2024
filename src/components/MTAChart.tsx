@@ -11,6 +11,7 @@ import {
 import Chroma from 'chroma-js';
 import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
+import { isoTimeNoMs } from '../api/mta-api';
 
 ChartJS.register(
 	CategoryScale,
@@ -73,16 +74,18 @@ const strToTwoDecimals = (str: string): number =>
 	Number(Number(str).toFixed(2));
 const LIMIT = 100;
 const getData = async (startDate: string) => {
+	const year = new Date(startDate).getFullYear();
+	const endDate = encodeURIComponent(isoTimeNoMs(new Date(year + '-12-31')));
 	const routeData: RouteData = {};
 	try {
 		const totalRows = await fetch(
-			'https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222020-03-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222020-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0A%7C%3E%0ASELECT%20count(*)%20AS%20%60__explore_count_name__%60&'
+			`https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%22${startDate}%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%22${endDate}%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0A%7C%3E%0ASELECT%20count(*)%20AS%20%60__explore_count_name__%60&`
 		)
 			.then((r) => r.json())
 			.then((r) => r[0].__explore_count_name__ as number);
 		// prod
 		// for (let i = 0; i < totalRows - 1; i += LIMIT) {
-		console.log('REMOVE DEBUG STATEMENT');
+		console.log('REMOVE DEBUG LOOP');
 		for (let offset = 0; offset < 200; offset += LIMIT) {
 			console.log(
 				'Loading rows ' +
@@ -97,7 +100,7 @@ const getData = async (startDate: string) => {
 			const rowData = await fetch(
 				`https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222020-03-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222020-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0AORDER%20BY%0A%20%20%60station%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60line_name%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60date%60)%20ASC%20NULL%20FIRST%0ALIMIT%20${LIMIT}%0AOFFSET%20${offset}&`
 			).then((r) => r.json() as Promise<Turnstile2020Data[]>);
-			console.log('Loaded. Processing rowData', rowData);
+			console.log('Loaded. Processing rowData');
 			rowData.reduce((acc: any, stationMonthData: Turnstile2020Data) => {
 				if (!acc[stationMonthData.station]) {
 					acc[stationMonthData.station] = {};
@@ -176,8 +179,6 @@ const routeDataToChartData = (
 		stationIndex++;
 	}
 
-	console.log(chartData);
-
 	return chartData;
 };
 
@@ -188,7 +189,7 @@ export const MTAChart = () => {
 	}>();
 	const startDate = '2020-03-01';
 	useEffect(() => {
-		console.log('init');
+		console.log('init mta chart');
 		getData(startDate).then((d) => {
 			const chartData = routeDataToChartData(startDate, d);
 			setData({

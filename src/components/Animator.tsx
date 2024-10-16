@@ -187,75 +187,78 @@ export const Animator = () => {
 		});
 	};
 
-	return (
-		<Stack>
-			<Stack
-				spacing={2}
-				direction="row"
-				justifyContent="center"
-				alignItems="center"
-				padding={1}
-			>
-				<ButtonGroup>
-					<Button onClick={decreasePlaybackSpeed} variant="outlined">
-						-
-					</Button>
-					<TextField
-						label="FPS"
-						value={playbackSpeedText}
-						onChange={handleSetPlaybackSpeed}
-						variant="outlined"
-						sx={{width: '80px'}}
-					/>
-					<Button onClick={increasePlaybackSpeed} variant="outlined">
-						+
-					</Button>
-				</ButtonGroup>
-				<ButtonGroup>
-					<Button
-						onClick={() => updateAnimationIndex({updateFn: (idx) => idx - 1})}
+	const ActionGroup = () => (
+		<Stack id="animator-action-group"
+			gap={1}
+			direction={{md: 'column', lg: 'row'}}
+			justifyContent={{md:"center", lg: "space-between"}}
+			alignItems="center"
+		>
+			<ButtonGroup>
+				<Button onClick={decreasePlaybackSpeed} variant="outlined">
+					-
+				</Button>
+				<TextField
+					label="FPS"
+					value={playbackSpeedText}
+					onChange={handleSetPlaybackSpeed}
+					variant="outlined"
+					sx={{width: '80px'}}
+				/>
+				<Button onClick={increasePlaybackSpeed} variant="outlined">
+					+
+				</Button>
+			</ButtonGroup>
+			<ButtonGroup>
+				<Button
+					onClick={() => updateAnimationIndex({updateFn: (idx) => idx - 1})}
+				>
+					Prev
+				</Button>
+				<FormControl sx={{minWidth: '140px'}}>
+					<InputLabel>Selected Date</InputLabel>
+					<Select
+						value={DateList[dateIndex]}
+						label="Selected Date"
+						onChange={handleDateSelect}
 					>
-						Prev Date
-					</Button>
-					<FormControl sx={{minWidth: '140px'}}>
-						<InputLabel>Selected Date</InputLabel>
-						<Select
-							value={DateList[dateIndex]}
-							label="Selected Date"
-							onChange={handleDateSelect}
-						>
-							{DateList.map((date) => (
-								<MenuItem value={date} key={date}>
-									{date}
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-					<Button
-						onClick={() => updateAnimationIndex({updateFn: (idx) => idx + 1})}
-					>
-						Next Date
-					</Button>
-				</ButtonGroup>
+						{DateList.map((date) => (
+							<MenuItem value={date} key={date}>
+								{date}
+							</MenuItem>
+						))}
+					</Select>
+				</FormControl>
+				<Button
+					onClick={() => updateAnimationIndex({updateFn: (idx) => idx + 1})}
+				>
+					Next
+				</Button>
+			</ButtonGroup>
 
-				<ButtonGroup sx={{height: "100%"}}>
-					<Button
-						onClick={toggleAnimation}
-						variant="outlined"
-						sx={{height: '100%', minWidth: 'fit-content'}}
-					>
-						{isAnimationRunning ? 'Freeze' : 'Animate'}
-					</Button>
-					<Button
-						onClick={resetAnimation}
-						variant="outlined"
-						disabled={dateIndex === 0}
-						sx={{height: '100%', minWidth: 'fit-content'}}
-					>
-						Reset
-					</Button>
-				</ButtonGroup>
-			</Stack>
+			<ButtonGroup sx={{height: '100%'}}>
+				<Button
+					onClick={toggleAnimation}
+					variant="outlined"
+					sx={{height: '100%', minWidth: 'fit-content'}}
+				>
+					{isAnimationRunning ? 'Freeze' : 'Animate'}
+				</Button>
+				<Button
+					onClick={resetAnimation}
+					variant="outlined"
+					disabled={dateIndex === 0}
+					sx={{height: '100%', minWidth: 'fit-content'}}
+				>
+					Reset
+				</Button>
+			</ButtonGroup>
+		</Stack>
+	);
+
+	return (
+		<Stack sx={{width: '100%'}}>
+			<ActionGroup />
 			<Slider
 				sx={{display: {xs: 'none', sm: 'inline-block'}}}
 				value={dateIndex}

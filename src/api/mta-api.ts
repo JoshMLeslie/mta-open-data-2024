@@ -153,7 +153,7 @@ export const NYCBridgeAndTunnelBounds: Record<BAT_ID, LatLngBoundsLiteral> = {
 	],
 };
 
-const isoTimeNoMs = (t: Date) => t.toISOString().split(/\.\d{3}Z/)[0];
+export const isoTimeNoMs = (t: Date) => t.toISOString().split(/\.\d{3}Z/)[0];
 
 /** week by inclusive start, exclusive end (?)
  * e.g. [
