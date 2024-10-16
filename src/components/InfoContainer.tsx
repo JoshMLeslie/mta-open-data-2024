@@ -42,7 +42,7 @@ const InfoContainer = () => {
 					spacing="1"
 					direction="row"
 					alignItems="center"
-					justifyContent="space-between"
+					justifyContent="space-around"
 					sx={{width: '100%'}}
 				>
 					<Button
