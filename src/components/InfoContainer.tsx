@@ -13,14 +13,31 @@ const InfoContainer = () => {
 
 	return (
 		<div id="info-container">
-			<Stack alignItems="center" justifyContent="space-between">
-				<Typography align="left">
-					This app compares COVID_19 rates against MTA ridership data between
-					March 2020 and Today (or until they stop updating the respective
-					data). Data is from the NYC Department of Health (DOH) and
-					Metropolitan Transportation Authority (MTA). See modals for further
-					info.
-				</Typography>
+			<Stack justifyContent="space-between">
+				<Stack>
+					<Typography
+						variant="h1"
+						sx={{fontSize: {xs: '1.5rem', sm: '2rem', md: '2rem', lg: '3rem'}}}
+					>
+						NYC Open Data
+					</Typography>
+					<Typography
+						gutterBottom
+						variant="h2"
+						sx={{
+							fontSize: {xs: '1.25rem', sm: '1.5rem', md: '1.5rem', lg: '2rem'},
+						}}
+					>
+						MTA Ridership vs COVID 19 Rates
+					</Typography>
+					<Typography>
+						This app compares COVID_19 rates against MTA ridership data between
+						March 2020 and Today (or until they stop updating the respective
+						data). Data is from the NYC Department of Health (DOH) and
+						Metropolitan Transportation Authority (MTA). See modals for further
+						info.
+					</Typography>
+				</Stack>
 				<Stack
 					spacing="1"
 					direction="row"
