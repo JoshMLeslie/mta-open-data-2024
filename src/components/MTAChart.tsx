@@ -1,6 +1,8 @@
 import {
 	CategoryScale,
 	Chart as ChartJS,
+	ChartOptions,
+	LayoutPosition,
 	Legend,
 	LinearScale,
 	LineElement,
@@ -23,15 +25,16 @@ ChartJS.register(
 	Legend
 );
 
-const options = {
+const options: ChartOptions<'line'> = {
 	responsive: true,
+	maintainAspectRatio: false,
 	plugins: {
 		legend: {
-			position: 'top' as const,
+			position: 'top' as LayoutPosition,
 		},
 		title: {
 			display: true,
-			text: 'Chart.js Line Chart',
+			text: 'MTA Subway Exits',
 		},
 	},
 };
@@ -48,7 +51,7 @@ const monthLabels = [
 	'September',
 	'October',
 	'November',
-	'December'
+	'December',
 ];
 
 interface Turnstile2020Data {
