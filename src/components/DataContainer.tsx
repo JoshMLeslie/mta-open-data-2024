@@ -1,13 +1,4 @@
 import { Stack } from '@mui/material';
-import {
-	BarElement,
-	CategoryScale,
-	Chart as ChartJS,
-	Legend,
-	LinearScale,
-	Title,
-	Tooltip,
-} from 'chart.js';
 import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useState } from 'react';
@@ -16,15 +7,6 @@ import boroughBoundaries from '../geojson/borough-boundaries.json';
 import InitCovidHeatMap from './CovidHeatmap';
 import InfoContainer from './InfoContainer';
 import { MTAChart } from './MTAChart';
-
-ChartJS.register(
-	CategoryScale,
-	LinearScale,
-	BarElement,
-	Title,
-	Tooltip,
-	Legend
-);
 
 const INIT_ZOOM = 10;
 const MAX_ZOOM = 15;
