@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { onModalMessage } from '../util/events';
 
 export const AttachedModal = () => {
-	const [message, setMessage] = useState('');
+	const [message, setMessage] = useState<string>('');
 
-	onModalMessage(({detail}) => setMessage(detail));
+	onModalMessage(({detail = ''}) => setMessage(detail));
 
 	return (
 		<Modal
