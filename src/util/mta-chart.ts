@@ -54,12 +54,17 @@ const formatLineTooltip = (
 	return `${line}, ${station}: ${prettyPrintRidership}`;
 };
 
-const getDiffInRidershipOverMonth = (temp1: Record<string, number>) => {
+const getDiffInRidershipOverMonth = (
+	ridershipData: Record<string, number>,
+	line: string
+): MtaChartDatum => {
 	let prevRidership = 0;
 	const diff = [];
-	for (let date in temp1) {
-		const monthlyDiff = temp1[date] - prevRidership;
+	for (let date in ridershipData) {
+		const currentRidership = ridershipData[date];
 		if (prevRidership !== 0) {
+			let adjustedDiff = 0;
+			const basicMonthlyDiff = currentRidership - prevRidership;
 			/*
 				The numbers reported are defined as cumulative, but straight processing
 				returns occasional negative values which makes me think that when the
@@ -67,9 +72,38 @@ const getDiffInRidershipOverMonth = (temp1: Record<string, number>) => {
 				less than the previous reported value, so for argument's sake, going to
 				clamp to positive values
 			*/
-			diff.push(monthlyDiff > 0 ? monthlyDiff : 0);
+			if (basicMonthlyDiff > 0) {
+				adjustedDiff = basicMonthlyDiff;
+			}
+			/*
+				Continuing with the "reinitialized value changes wildly" theory:
+				The next issue with the data encountered is wild jumps by several
+				magnitude, e.g. 2m to 40m riders or 40m to 400m between two months,
+				which is itself alarming and makes me think someone is messing with
+				their base 10s, but also how the average diff returns to pre-jump value.
+				e.g. c.2020, 191 st - 1 line:
+				[
+					2201876.13, 2211228.7, 2214287.51, 2216439.42, 2219777.5, 43689640.95,
+					404631069.6, 403315618.87, 403322207.98, 404320347.18, 403762079.77
+				]
+			*/
+			const magnitude = currentRidership / prevRidership;
+			if (magnitude > 9) {
+				adjustedDiff = Math.abs(
+					currentRidership / magnitude - prevRidership
+				);
+
+				console.warn('magnitude shift', line, date, {
+					adjustedDiff,
+					adjustedRidership: currentRidership / magnitude,
+					currentRidership,
+					magnitude,
+					prevRidership,
+				});
+			}
+			diff.push(adjustedDiff);
 		}
-		prevRidership = temp1[date];
+		prevRidership = currentRidership;
 	}
 	return diff;
 };
@@ -88,11 +122,12 @@ export const routeDataToChartData = (
 			for (const line in stationData) {
 				if (stationData.hasOwnProperty(line)) {
 					const lineData = stationData[line];
-					const diff: Array<number | null> =
-						getDiffInRidershipOverMonth(lineData);
+					const label = station + ' - ' + line;
+					const diff = getDiffInRidershipOverMonth(lineData, label);
 
+					// since we're diffing over months, pad one null into the front
+					diff.unshift(null);
 					while (diff.length < 12) {
-						// 2020 is the only year we start early
 						if (startMonth > 1) {
 							diff.unshift(null);
 						} else {
@@ -100,7 +135,7 @@ export const routeDataToChartData = (
 						}
 					}
 					chartData.push({
-						label: station + ' - ' + line,
+						label: label,
 						data: diff,
 					});
 				}
@@ -108,7 +143,6 @@ export const routeDataToChartData = (
 		}
 	}
 
-	console.log(chartData);
 	return chartData;
 };
 

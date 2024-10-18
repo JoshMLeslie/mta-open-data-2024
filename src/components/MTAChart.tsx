@@ -3,6 +3,7 @@ import {
 	InputLabel,
 	MenuItem,
 	Select,
+	SelectChangeEvent,
 	Stack,
 	Typography,
 } from '@mui/material';
@@ -17,6 +18,7 @@ import {
 	LineController,
 	LineElement,
 	PointElement,
+	Tooltip,
 } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import { NYC_Borough } from '../@types/mta-api';
@@ -32,6 +34,7 @@ Chart.register(
 	PointElement,
 	CategoryScale,
 	LinearScale,
+	Tooltip,
 	Legend
 );
 export const MTAChart = () => {
@@ -43,7 +46,7 @@ export const MTAChart = () => {
 
 	useEffect(() => {
 		console.log('init mta chart');
-		const startDate = new Date('2020-03-01');
+		const startDate = new Date('2020-01-01');
 		getChartData(startDate).then((boroughData) => {
 			setBaseData(boroughData);
 			setSelectedData(boroughData[NYC_Borough.MANHATTAN]);
@@ -67,13 +70,18 @@ export const MTAChart = () => {
 			type: 'line',
 			options: {
 				responsive: true,
+				maintainAspectRatio: false,
 				plugins: {
 					legend: {
-						position: 'top',
+						position: 'bottom',
 					},
 					title: {
 						display: true,
 						text: 'Ridership data',
+					},
+					tooltip: {
+						intersect: true,
+						mode: 'point',
 					},
 				},
 			},
@@ -84,9 +92,11 @@ export const MTAChart = () => {
 		});
 	}, [selectedData]);
 
-	useEffect(() => {
-		setSelectedData(baseData[selectedBorough]);
-	}, [selectedBorough]);
+	const handleBoroughChange = (e: SelectChangeEvent) => {
+		const borough = e.target.value as NYC_Borough;
+		setSelectedBorough(borough);
+		setSelectedData(baseData[borough]);
+	};
 
 	return (
 		<div id="mta-chart-container">
@@ -97,17 +107,15 @@ export const MTAChart = () => {
 						<Typography variant="h1" sx={{fontSize: '2rem'}}>
 							Ridership Changes per Month
 						</Typography>
-						<FormControl sx={{minWidth: '200px'}}>
+						<FormControl sx={{minWidth: '150px'}}>
 							<InputLabel id="borough-select-label">Borough</InputLabel>
 							<Select
 								labelId="borough-select-label"
 								id="borough-select"
 								value={selectedBorough}
-								label="Age"
+								label="Borough"
 								autoWidth
-								onChange={(e) =>
-									setSelectedBorough(e.target.value as NYC_Borough)
-								}
+								onChange={handleBoroughChange}
 							>
 								{Object.values(NYC_Borough).map((b) => (
 									<MenuItem key={b} value={b}>
@@ -121,12 +129,11 @@ export const MTAChart = () => {
 						Month to month diff calculated based on cumulative ridership values
 						per line, per station. Positive slopes indicate increase in
 						ridership, negative slope indicates decrease. Zero values indicate
-						no ridership for that time period.
+						no ridership for that time period. WIP: MTA data only setup for 2020
+						currently
 					</Typography>
 
-					<div id="ridership-chart-container">
-						<canvas id="ridership-chart" ref={chartElRef}></canvas>
-					</div>
+					<canvas id="ridership-chart" ref={chartElRef}></canvas>
 				</Stack>
 			)}
 		</div>
