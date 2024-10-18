@@ -1,4 +1,5 @@
-import { LineChartProps, LineSeriesType } from '@mui/x-charts';
+import { ChartDataset } from 'chart.js';
+import LineData2020ToBorough from './mta/line-data-2020-to-borough';
 
 export interface Turnstile2020Data {
 	avg_exits: string; // float string
@@ -19,8 +20,8 @@ export interface RouteData {
 	};
 }
 
-export type ChartDatum = LineSeriesType['data'];
-export type ChartSeries = LineChartProps['series'];
+export type MtaChartDatum = (number | null)[];
+export type MtaChartSeries = ChartDataset<'bar', MtaChartDatum>[];
 
 export const monthLabels = [
 	'January',
@@ -74,41 +75,32 @@ const getDiffInRidershipOverMonth = (temp1: Record<string, number>) => {
 };
 
 export const routeDataToChartData = (
-	startDateString: string,
-	routeData: RouteData
-): ChartSeries => {
-	let chartData: ChartSeries = [];
+	routeData: RouteData,
+	startMonth: number
+) => {
+	let chartData: MtaChartSeries = [];
+
+	// who's the dumbass who started months at 0 instead of 1?
 
 	for (const station in routeData) {
 		if (routeData.hasOwnProperty(station)) {
-			const lineData = routeData[station];
-			for (const line in lineData) {
-				if (lineData.hasOwnProperty(line)) {
-					const lineMonthlyRidership = lineData[line];
+			const stationData = routeData[station];
+			for (const line in stationData) {
+				if (stationData.hasOwnProperty(line)) {
+					const lineData = stationData[line];
 					const diff: Array<number | null> =
-						getDiffInRidershipOverMonth(lineMonthlyRidership);
+						getDiffInRidershipOverMonth(lineData);
 
-					// const data: ChartDatum = Object.values<null | number>(
-					// 	lineMonthlyRidership
-					// );
-
-					const startDate = new Date(startDateString);
-					const startYear = startDate.getFullYear();
-					if (startDate.getTime() > new Date(startYear).getTime()) {
-						// if startDate > startYear, pad with zeros from the start
-						while (diff.length < 12) {
+					while (diff.length < 12) {
+						// 2020 is the only year we start early
+						if (startMonth > 1) {
 							diff.unshift(null);
-						}
-					} else {
-						// if startDate <= startYear but the array is short, pad with zeros from the end
-						while (diff.length < 12) {
+						} else {
 							diff.push(null);
 						}
 					}
 					chartData.push({
-						showMark: true,
-						valueFormatter: (diff) =>
-							diff ? formatLineTooltip(station, line, diff) : '',
+						label: station + ' - ' + line,
 						data: diff,
 					});
 				}
@@ -118,4 +110,39 @@ export const routeDataToChartData = (
 
 	console.log(chartData);
 	return chartData;
+};
+
+export const routeDataToBoroughs = (routeData: RouteData) => {
+	const boroughData: Record<string, RouteData> = {};
+	for (const stationLabel in routeData) {
+		if (routeData.hasOwnProperty(stationLabel)) {
+			const data = routeData[stationLabel];
+			const stationBorough = LineData2020ToBorough[stationLabel];
+			if (boroughData[stationBorough]) {
+				boroughData[stationBorough][stationLabel] = data;
+			} else {
+				boroughData[stationBorough] = {
+					[stationLabel]: data,
+				};
+			}
+		}
+	}
+	return boroughData;
+};
+
+export const boroughDataToChart = (
+	boroughData: Record<string, RouteData>,
+	startMonth: number
+) => {
+	const boroughChartData: Record<string, MtaChartSeries> = {};
+	for (const boroughLabel in boroughData) {
+		if (boroughData.hasOwnProperty(boroughLabel)) {
+			const boroughDatum = boroughData[boroughLabel];
+			boroughChartData[boroughLabel] = routeDataToChartData(
+				boroughDatum,
+				startMonth
+			);
+		}
+	}
+	return boroughChartData;
 };

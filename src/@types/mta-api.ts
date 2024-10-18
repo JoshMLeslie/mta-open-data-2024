@@ -1,4 +1,10 @@
-
+export enum NYC_Borough {
+	BRONX = 'Bronx',
+	BROOKLYN = 'Brooklyn',
+	MANHATTAN = 'Manhattan',
+	QUEENS = 'Queens',
+	STATEN_ISLAND = 'Staten Island',
+}
 // ripped from the MTA data
 export type BAT_ID =
 	| '21'
