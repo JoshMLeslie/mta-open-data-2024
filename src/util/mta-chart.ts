@@ -23,6 +23,18 @@ export interface RouteData {
 export type MtaChartDatum = (number | null)[];
 export type MtaChartSeries = ChartDataset<'bar', MtaChartDatum>[];
 
+export interface MagnitudeShift {
+	id: string;
+	stop: string;
+	date: string;
+	magAdjDiff: number;
+	magAdjRidership: number;
+	currentRidership: number;
+	magnitude: number;
+	prevRidership: number;
+}
+export type MagnitudeShiftTracking = MagnitudeShift[];
+
 export const monthLabels = [
 	'January',
 	'February',
@@ -43,27 +55,28 @@ export const strToTwoDecimals = (str: string): number =>
 
 export const MTA_DATA_API_LIMIT = 100;
 
-const formatLineTooltip = (
-	station: string,
-	line: string,
-	ridership: number
-) => {
-	const prettyPrintRidership =
-		(ridership > 0 ? '+' : '-') +
-		ridership.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	return `${line}, ${station}: ${prettyPrintRidership}`;
+export const prettyPrintRidership = (ridership: number, showSpin = false) => {
+	const commaRidership = ridership
+		.toFixed(2)
+		.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	if (showSpin) {
+		return (ridership > 0 ? '+' : '-') + commaRidership;
+	} else {
+		return commaRidership;
+	}
 };
 
 const getDiffInRidershipOverMonth = (
 	ridershipData: Record<string, number>,
-	line: string
-): MtaChartDatum => {
+	stop: string
+): {diff: MtaChartDatum; magShiftTracking: MagnitudeShiftTracking} => {
+	const magShiftTracking = [];
 	let prevRidership = 0;
 	const diff = [];
 	for (let date in ridershipData) {
 		const currentRidership = ridershipData[date];
 		if (prevRidership !== 0) {
-			let adjustedDiff = 0;
+			let magAdjDiff = 0;
 			const basicMonthlyDiff = currentRidership - prevRidership;
 			/*
 				The numbers reported are defined as cumulative, but straight processing
@@ -73,7 +86,7 @@ const getDiffInRidershipOverMonth = (
 				clamp to positive values
 			*/
 			if (basicMonthlyDiff > 0) {
-				adjustedDiff = basicMonthlyDiff;
+				magAdjDiff = basicMonthlyDiff;
 			}
 			/*
 				Continuing with the "reinitialized value changes wildly" theory:
@@ -87,31 +100,39 @@ const getDiffInRidershipOverMonth = (
 					404631069.6, 403315618.87, 403322207.98, 404320347.18, 403762079.77
 				]
 			*/
-			const magnitude = currentRidership / prevRidership;
+			let magnitude = currentRidership / prevRidership;
 			if (magnitude > 9) {
-				adjustedDiff = Math.abs(
-					currentRidership / magnitude - prevRidership
-				);
+				while (Math.round(magnitude) % 10 !== 0) {
+					magnitude++;
+				}
+				const magAdjRidership = currentRidership / magnitude;
+				magAdjDiff = Math.abs(magAdjRidership - prevRidership);
 
-				console.warn('magnitude shift', line, date, {
-					adjustedDiff,
-					adjustedRidership: currentRidership / magnitude,
+				const magShift: MagnitudeShift = {
+					id: `${stop}-${date}`,
+					stop,
+					date,
+					magAdjDiff: +magAdjDiff.toFixed(2),
+					magAdjRidership,
 					currentRidership,
-					magnitude,
+					magnitude: +magnitude.toFixed(2),
 					prevRidership,
-				});
+				};
+				magShiftTracking.push(magShift);
+				console.warn('magnitude shift', magShift);
 			}
-			diff.push(adjustedDiff);
+			diff.push(magAdjDiff);
 		}
 		prevRidership = currentRidership;
 	}
-	return diff;
+	return {diff, magShiftTracking};
 };
 
 export const routeDataToChartData = (
 	routeData: RouteData,
 	startMonth: number
 ) => {
+	const totalMagShiftTracking: MagnitudeShiftTracking = [];
 	let chartData: MtaChartSeries = [];
 
 	// who's the dumbass who started months at 0 instead of 1?
@@ -123,7 +144,11 @@ export const routeDataToChartData = (
 				if (stationData.hasOwnProperty(line)) {
 					const lineData = stationData[line];
 					const label = station + ' - ' + line;
-					const diff = getDiffInRidershipOverMonth(lineData, label);
+					const {diff, magShiftTracking} = getDiffInRidershipOverMonth(
+						lineData,
+						label
+					);
+					totalMagShiftTracking.push(...magShiftTracking);
 
 					// since we're diffing over months, pad one null into the front
 					diff.unshift(null);
@@ -143,7 +168,7 @@ export const routeDataToChartData = (
 		}
 	}
 
-	return chartData;
+	return {chartData, magShiftTracking: totalMagShiftTracking};
 };
 
 export const routeDataToBoroughs = (routeData: RouteData) => {
@@ -168,7 +193,10 @@ export const boroughDataToChart = (
 	boroughData: Record<string, RouteData>,
 	startMonth: number
 ) => {
-	const boroughChartData: Record<string, MtaChartSeries> = {};
+	const boroughChartData: Record<
+		string,
+		{chartData: MtaChartSeries; magShiftTracking: MagnitudeShiftTracking}
+	> = {};
 	for (const boroughLabel in boroughData) {
 		if (boroughData.hasOwnProperty(boroughLabel)) {
 			const boroughDatum = boroughData[boroughLabel];
