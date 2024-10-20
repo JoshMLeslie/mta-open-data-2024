@@ -1,19 +1,14 @@
 import WarningIcon from '@mui/icons-material/Warning';
 import {
 	Button,
-	Dialog,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
 	FormControl,
 	InputLabel,
 	MenuItem,
 	Select,
 	SelectChangeEvent,
 	Stack,
-	Typography,
+	Typography
 } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import {
 	BarController,
 	BarElement,
@@ -32,36 +27,9 @@ import { NYC_Borough } from '../@types/mta-api';
 import { getChartData, GetChartDataReturn } from '../api/mta-chart-api';
 import { onDateUpdate } from '../util/events';
 import {
-	MagnitudeShift,
-	monthLabels,
-	prettyPrintRidership,
+	monthLabels
 } from '../util/mta-chart';
-
-const dataGridColumns: GridColDef<MagnitudeShift>[] = [
-	{field: 'stop', headerName: 'Stop'},
-	{
-		field: 'date',
-		headerName: 'Date',
-		valueFormatter: (d) => new Date(d).toLocaleDateString(),
-	},
-	{
-		field: 'currentRidership',
-		headerName: 'Date Ridership',
-		valueFormatter: (r) => prettyPrintRidership(r),
-	},
-	{
-		field: 'prevRidership',
-		headerName: 'Prev. Date Ridership',
-		valueFormatter: (r) => prettyPrintRidership(r),
-	},
-	{field: 'magnitude', headerName: 'Magnitude'},
-	{field: 'magAdjDiff', headerName: 'Adj. Diff'},
-	{
-		field: 'magAdjRidership',
-		headerName: 'Mag. Adj. Ridership',
-		valueFormatter: (r) => prettyPrintRidership(r),
-	},
-];
+import MTADataMagnitudeDialog from './dialogs/MTADataMagnitude.dialog';
 
 Chart.register(
 	Colors,
@@ -178,13 +146,17 @@ export const MTAChart = () => {
 							<Typography variant="h1" sx={{fontSize: '2rem'}}>
 								Ridership Changes per Month
 							</Typography>
-							<Button
-								aria-label="notice"
-								startIcon={<WarningIcon />}
-								onClick={openDataManipulatedDialog}
-							>
-								Data Adjusted
-							</Button>
+							{selectedData?.magShiftTracking.length && (
+								<Button
+									sx={{height: '100%'}}
+									variant="outlined"
+									aria-label="notice"
+									startIcon={<WarningIcon />}
+									onClick={openDataManipulatedDialog}
+								>
+									Data Adjusted
+								</Button>
+							)}
 							<FormControl sx={{minWidth: '150px'}}>
 								<InputLabel id="borough-select-label">Borough</InputLabel>
 								<Select
@@ -215,30 +187,11 @@ export const MTAChart = () => {
 					</Stack>
 				)}
 			</div>
-			<Dialog
-				open={dataManipulatedDialogOpen}
-				onClose={closeDataManipulatedDialog}
-			>
-				<DialogTitle>Data Manipulation List</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
-						The following data manipulations were performed. See 'Ridership Data
-						Info' popup for more details.
-					</DialogContentText>
-					<DataGrid
-						columns={dataGridColumns}
-						rows={selectedData?.magShiftTracking}
-						initialState={{
-							pagination: {
-								paginationModel: {
-									pageSize: 5,
-								},
-							},
-						}}
-						pageSizeOptions={[5, 10, 20]}
-					></DataGrid>
-				</DialogContent>
-			</Dialog>
+			<MTADataMagnitudeDialog
+				dataManipulatedDialogOpen={dataManipulatedDialogOpen}
+				closeDataManipulatedDialog={closeDataManipulatedDialog}
+				magShiftTracking={selectedData?.magShiftTracking}
+			/>
 		</>
 	);
 };
