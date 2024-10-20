@@ -25,6 +25,9 @@ export const getChartData = async (
 	const accessDateString = accessDate
 		.toISOString()
 		.split('T')[0] as keyof typeof AccessData;
+	if (!(accessDateString in AccessData)) {
+		throw new Error(`No data configured for date ${accessDateString}`);
+	}
 	const accessData = AccessData[accessDateString];
 	const routeData: RouteData = {};
 	try {
@@ -62,8 +65,9 @@ export const getChartData = async (
 				return acc;
 			}, routeData);
 		}
-	} catch (e) {
+	} catch (e: any) {
 		console.warn(e);
+		throw new Error(e || 'chart api error');
 	}
 
 	const boroughData = routeDataToBoroughs(routeData);

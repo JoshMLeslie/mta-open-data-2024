@@ -62,6 +62,7 @@ const chartConfig: ChartOptions = {
 };
 
 export const MTAChart = () => {
+	const [loading, setLoading] = useState(false);
 	const [baseData, setBaseData] = useState<GetChartDataReturn>({});
 	const [selectedData, setSelectedData] =
 		useState<GetChartDataReturn[string]>();
@@ -79,12 +80,17 @@ export const MTAChart = () => {
 			setBaseData(boroughData);
 			setSelectedData(boroughData[NYC_Borough.MANHATTAN]);
 		} catch (e) {
+			setBaseData({});
+			setSelectedData(undefined);
 			console.warn('error while loading mta chart data', e);
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	useEffect(() => {
 		console.debug('init mta chart');
+		setLoading(true);
 		loadData(new Date('2020-01-01'));
 		const onDateUpdateUnmount = onDateUpdate(({detail: date}) => {
 			const updateYear = new Date(date).getUTCFullYear();
@@ -99,11 +105,11 @@ export const MTAChart = () => {
 	}, []);
 
 	useEffect(() => {
-		if (!chartElRef.current) {
-			console.warn('data loaded without chart element painted');
+		if (!selectedData) {
 			return;
 		}
-		if (!selectedData) {
+		if (!chartElRef.current) {
+			console.warn('data loaded without chart element painted');
 			return;
 		}
 		if (chartRef.current) {
@@ -137,7 +143,8 @@ export const MTAChart = () => {
 	return (
 		<>
 			<div id="mta-chart-container">
-				{!selectedData && <h2>Loading</h2>}
+				{!selectedData && loading && <h2>Loading</h2>}
+				{!selectedData && !loading && <h2>Error loading data</h2>}
 				{selectedData && (
 					<Stack sx={{height: '100%', width: '100%'}}>
 						<Stack direction="row" alignItems="center" sx={{p: 1, gap: '8px'}}>
