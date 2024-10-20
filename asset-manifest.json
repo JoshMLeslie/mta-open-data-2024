@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/mta-open-data-2024/static/css/main.43d98600.css",
-    "main.js": "/mta-open-data-2024/static/js/main.999df0ca.js",
+    "main.css": "/mta-open-data-2024/static/css/main.8df62b1d.css",
+    "main.js": "/mta-open-data-2024/static/js/main.a43193a7.js",
     "static/media/roboto-latin-700-normal.woff2": "/mta-open-data-2024/static/media/roboto-latin-700-normal.4535474e1cf8598695ad.woff2",
     "static/media/roboto-latin-500-normal.woff2": "/mta-open-data-2024/static/media/roboto-latin-500-normal.7077203b1982951ecf76.woff2",
     "static/media/roboto-latin-400-normal.woff2": "/mta-open-data-2024/static/media/roboto-latin-400-normal.297d48e1b5a10c0831a9.woff2",
@@ -59,11 +59,11 @@
     "static/media/roboto-greek-ext-300-normal.woff": "/mta-open-data-2024/static/media/roboto-greek-ext-300-normal.b590dbe5c639944366d1.woff",
     "static/media/roboto-greek-ext-400-normal.woff": "/mta-open-data-2024/static/media/roboto-greek-ext-400-normal.16eb83b4a3b1ea994243.woff",
     "index.html": "/mta-open-data-2024/index.html",
-    "main.43d98600.css.map": "/mta-open-data-2024/static/css/main.43d98600.css.map",
-    "main.999df0ca.js.map": "/mta-open-data-2024/static/js/main.999df0ca.js.map"
+    "main.8df62b1d.css.map": "/mta-open-data-2024/static/css/main.8df62b1d.css.map",
+    "main.a43193a7.js.map": "/mta-open-data-2024/static/js/main.a43193a7.js.map"
   },
   "entrypoints": [
-    "static/css/main.43d98600.css",
-    "static/js/main.999df0ca.js"
+    "static/css/main.8df62b1d.css",
+    "static/js/main.a43193a7.js"
   ]
 }
