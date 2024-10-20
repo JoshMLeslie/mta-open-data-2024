@@ -7,13 +7,14 @@ import {
 	Select,
 	SelectChangeEvent,
 	Stack,
-	Typography
+	Typography,
 } from '@mui/material';
 import {
 	BarController,
 	BarElement,
 	CategoryScale,
 	Chart,
+	ChartOptions,
 	Colors,
 	Legend,
 	LinearScale,
@@ -26,9 +27,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NYC_Borough } from '../@types/mta-api';
 import { getChartData, GetChartDataReturn } from '../api/mta-chart-api';
 import { onDateUpdate } from '../util/events';
-import {
-	monthLabels
-} from '../util/mta-chart';
+import { monthLabels } from '../util/mta-chart';
 import MTADataMagnitudeDialog from './dialogs/MTADataMagnitude.dialog';
 
 Chart.register(
@@ -43,6 +42,25 @@ Chart.register(
 	Tooltip,
 	Legend
 );
+
+const chartConfig: ChartOptions = {
+	responsive: true,
+	maintainAspectRatio: false,
+	plugins: {
+		legend: {
+			position: 'bottom',
+		},
+		title: {
+			display: true,
+			text: 'Ridership data',
+		},
+		tooltip: {
+			intersect: true,
+			mode: 'point',
+		},
+	},
+};
+
 export const MTAChart = () => {
 	const [baseData, setBaseData] = useState<GetChartDataReturn>({});
 	const [selectedData, setSelectedData] =
@@ -55,9 +73,6 @@ export const MTAChart = () => {
 	const chartRef = useRef<Chart | null>(null);
 	const selectedYearRef = useRef(2020);
 
-	/**
-	 * @param startDate string in the format YYYY-MM-DD
-	 */
 	const loadData = async (startDate: Date) => {
 		try {
 			const boroughData = await getChartData(startDate);
@@ -74,7 +89,6 @@ export const MTAChart = () => {
 		const onDateUpdateUnmount = onDateUpdate(({detail: date}) => {
 			const updateYear = new Date(date).getUTCFullYear();
 			if (selectedYearRef.current !== updateYear) {
-				console.log(updateYear);
 				loadData(new Date(`${updateYear}-01-01`));
 				selectedYearRef.current = updateYear;
 			}
@@ -99,23 +113,7 @@ export const MTAChart = () => {
 		}
 		chartRef.current = new Chart(chartElRef.current, {
 			type: 'line',
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				plugins: {
-					legend: {
-						position: 'bottom',
-					},
-					title: {
-						display: true,
-						text: 'Ridership data',
-					},
-					tooltip: {
-						intersect: true,
-						mode: 'point',
-					},
-				},
-			},
+			options: chartConfig,
 			data: {
 				labels: monthLabels,
 				datasets: selectedData.chartData,
