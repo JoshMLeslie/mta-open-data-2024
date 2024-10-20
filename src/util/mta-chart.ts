@@ -41,7 +41,7 @@ export const monthLabels = [
 export const strToTwoDecimals = (str: string): number =>
 	Number(Number(str).toFixed(2));
 
-export const LIMIT = 100;
+export const MTA_DATA_API_LIMIT = 100;
 
 const formatLineTooltip = (
 	station: string,

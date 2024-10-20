@@ -1,5 +1,5 @@
 import {
-	LIMIT,
+	MTA_DATA_API_LIMIT,
 	RouteData,
 	Turnstile2020Data,
 	boroughDataToChart,
@@ -9,7 +9,7 @@ import {
 const url2020RowCount = () =>
 	`https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222020-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222020-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0A%7C%3E%0ASELECT%20count(*)%20AS%20%60__explore_count_name__%60&`;
 const url2020Data = (offset: number) =>
-	`https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222020-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222020-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0AORDER%20BY%0A%20%20%60station%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60line_name%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60date%60)%20ASC%20NULL%20FIRST%0ALIMIT%20${LIMIT}%0AOFFSET%20${offset}&`;
+	`https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222020-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222020-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0AORDER%20BY%0A%20%20%60station%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60line_name%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60date%60)%20ASC%20NULL%20FIRST%0ALIMIT%20${MTA_DATA_API_LIMIT}%0AOFFSET%20${offset}&`;
 
 const AccessData = {
 	'2020-01-01': {
@@ -18,7 +18,10 @@ const AccessData = {
 	},
 };
 
-export const getChartData = async (accessDate: Date) => {
+export type GetChartDataReturn = ReturnType<typeof boroughDataToChart>;
+export const getChartData = async (
+	accessDate: Date
+): Promise<GetChartDataReturn> => {
 	const accessDateString = accessDate
 		.toISOString()
 		.split('T')[0] as keyof typeof AccessData;
@@ -29,18 +32,18 @@ export const getChartData = async (accessDate: Date) => {
 			.then((r) => r.json())
 			.then((r) => r[0].__explore_count_name__ as number);
 		// prod
-		for (let offset = 0; offset < totalRows - 1; offset += LIMIT) {
+		for (let offset = 0; offset < totalRows - 1; offset += MTA_DATA_API_LIMIT) {
 			// console.warn('REMOVE DEBUG LOOP');
 			// for (let offset = 0; offset < 100; offset += LIMIT) {
 			console.debug(
 				'Loading rows ' +
 					offset +
 					' to ' +
-					(offset + LIMIT - 1) +
+					(offset + MTA_DATA_API_LIMIT - 1) +
 					' of ' +
 					totalRows +
 					'. Remaining cycles: ' +
-					(totalRows - offset - 1) / LIMIT
+					(totalRows - offset - 1) / MTA_DATA_API_LIMIT
 			);
 			const rowData = await fetch(accessData.data(offset)).then(
 				(r) => r.json() as Promise<Turnstile2020Data[]>
