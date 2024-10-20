@@ -151,7 +151,7 @@ export const MTAChart = () => {
 							<Typography variant="h1" sx={{fontSize: '2rem'}}>
 								Ridership Changes per Month
 							</Typography>
-							{selectedData?.magShiftTracking.length && (
+							{!!selectedData?.magShiftTracking.length && (
 								<Button
 									sx={{height: '100%'}}
 									variant="outlined"
