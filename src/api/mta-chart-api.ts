@@ -112,30 +112,8 @@ export const getChartData = async (
 			);
 		}
 
-		// prod
-		// for (let offset = 0; offset < totalRows - 1; offset += MTA_DATA_API_LIMIT) {
-		// console.warn('REMOVE DEBUG LOOP');
-		// for (let offset = 0; offset < 100; offset += LIMIT) {
-		// const percentComplete = Math.round((offset / totalRows) * 100);
-		// dispatchLoadingUpdate({eventLabel: 'mta-api', value: percentComplete});
-
-		// const remainingCycles = (totalRows - offset - 1) / MTA_DATA_API_LIMIT;
-		// console.debug(
-		// 	'Loading rows ' +
-		// 		offset +
-		// 		' to ' +
-		// 		(offset + MTA_DATA_API_LIMIT - 1) +
-		// 		' of ' +
-		// 		totalRows +
-		// 		'. Remaining cycles: ' +
-		// 		remainingCycles
-		// );
-		// const rowData: TurnstileData[] = await fetch(
-		// 	apiYearDatum.data(offset)
-		// ).then((r) => r.json());
-		// console.debug('Loaded. Processing rowData');
 		(await Promise.all(allOffsetRequests))
-			.flatMap((d) => [...d])
+			.flatMap(d => d)
 			.reduce((acc: any, stationMonthDatum: TurnstileData) => {
 				const apiDatum = standardizeMTA_API_Data(stationMonthDatum, stationMap);
 
