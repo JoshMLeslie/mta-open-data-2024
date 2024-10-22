@@ -214,3 +214,18 @@ export const boroughDataToChart = (
 	}
 	return boroughChartData;
 };
+
+export const flattenBoroughChartData = (allBoroughs: BoroughChartData) => {
+	return Object.values(allBoroughs).reduce<BoroughChartDatum>(
+		(acc, boroughData) => {
+			return {
+				chartData: [...acc.chartData, ...boroughData.chartData],
+				magShiftTracking: [
+					...acc.magShiftTracking,
+					...boroughData.magShiftTracking,
+				],
+			};
+		},
+		{chartData: [], magShiftTracking: []}
+	);
+};

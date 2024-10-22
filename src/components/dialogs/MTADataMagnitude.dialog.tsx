@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import React from 'react';
+import { NYC_Borough } from '../../@types/mta-api';
 import {
 	MagnitudeShift,
 	MagnitudeShiftTracking,
@@ -50,12 +51,14 @@ const dataGridColumns: GridColDef<MagnitudeShift>[] = [
 interface Props {
 	dataManipulatedDialogOpen: boolean;
 	closeDataManipulatedDialog: () => void;
+	selectedBorough: NYC_Borough | 'all';
 	magShiftTracking?: MagnitudeShiftTracking;
 }
 
 const MTADataMagnitudeDialog: React.FC<Props> = ({
 	dataManipulatedDialogOpen,
 	closeDataManipulatedDialog,
+	selectedBorough,
 	magShiftTracking = [],
 }) => {
 	return (
@@ -64,7 +67,7 @@ const MTADataMagnitudeDialog: React.FC<Props> = ({
 			onClose={closeDataManipulatedDialog}
 			className='data-manipulation-dialog'
 		>
-			<DialogTitle>Data Manipulation List</DialogTitle>
+			<DialogTitle>Data Manipulation List for {selectedBorough}</DialogTitle>
 			<DialogContent>
 				<DialogContentText>
 					The following data manipulations were performed. See 'Ridership Data

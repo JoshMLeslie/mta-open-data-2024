@@ -31,7 +31,7 @@ const InfoContainer = () => {
 						MTA Ridership vs COVID 19 Rates
 					</Typography>
 					<Typography>
-						This app compares COVID_19 rates against MTA ridership data between
+						This app compares COVID 19 rates against MTA ridership data between
 						March 2020 and Today (or until they stop updating the respective
 						data). Data is from the NYC Department of Health (DOH) and
 						Metropolitan Transportation Authority (MTA). See popups for further

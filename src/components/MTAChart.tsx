@@ -30,6 +30,7 @@ import { onDateUpdate } from '../util/events';
 import {
 	BoroughChartData,
 	BoroughChartDatum,
+	flattenBoroughChartData,
 	monthLabels,
 } from '../util/mta-chart';
 import MTADataMagnitudeDialog from './dialogs/MTADataMagnitude.dialog';
@@ -149,6 +150,7 @@ export const MTAChart = () => {
 				{chartData: [], magShiftTracking: []}
 			);
 			console.log(allBoroughs);
+			const allBoroughs = flattenBoroughChartData(baseData!);
 			setSelectedData(allBoroughs);
 		} else {
 			setSelectedData(baseData[borough]);
