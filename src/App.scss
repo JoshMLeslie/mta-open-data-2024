@@ -58,3 +58,32 @@
 		max-width: 80vw !important;
 	}
 }
+
+.segment-loader-bar-container {
+	display: flex;
+	height: 24px;
+	width: fit-content;
+	box-sizing: border-box;
+	border: 2px solid black;
+	margin: 16px 8px;
+	padding-bottom: 2px;
+
+	.segment-loader-child {
+		position: relative;
+		height: 100%;
+		width: 16px;
+		border: 1px solid gray;
+
+		> div {
+			position: absolute;
+			bottom: 0;
+			height: 0;
+			width: 100%;
+			transition: height 500ms ease-in-out;
+		}
+		&.loaded > div {
+			height: 100%;
+			background-color: green;
+		}
+	}
+}

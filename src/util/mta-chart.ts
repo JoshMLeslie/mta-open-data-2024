@@ -1,45 +1,5 @@
-import { ChartDataset } from 'chart.js';
+import { BoroughChartData, BoroughChartDatum, MagnitudeShift, MagnitudeShiftTracking, MtaChartDatum, MtaChartSeries, RouteData } from '../@types/mta-api';
 import LineData2020ToBorough from './mta/line-data-2020-to-borough';
-
-export interface Turnstile2020Data {
-	avg_exits: string; // float string
-	by_month_date: string; // ISO
-	line_name: string;
-	station: string;
-}
-/**
- * station e.g. "103 ST"
- * station.date is an ISO string
- * line_name e.g.  '1', '6', 'BC', etc.
- */
-export interface RouteData {
-	[station: string]: {
-		[date: string]: {
-			[line_name: string]: number;
-		};
-	};
-}
-
-export type MtaChartDatum = (number | null)[];
-export type MtaChartSeries = ChartDataset<'bar', MtaChartDatum>[];
-
-export interface MagnitudeShift {
-	id: string;
-	stop: string;
-	date: string;
-	magAdjDiff: number;
-	magAdjRidership: number;
-	currentRidership: number;
-	magnitude: number;
-	prevRidership: number;
-}
-export type MagnitudeShiftTracking = MagnitudeShift[];
-
-export interface BoroughChartDatum {
-	chartData: MtaChartSeries;
-	magShiftTracking: MagnitudeShiftTracking;
-}
-export type BoroughChartData = Record<string, BoroughChartDatum>;
 
 export const monthLabels = [
 	'January',

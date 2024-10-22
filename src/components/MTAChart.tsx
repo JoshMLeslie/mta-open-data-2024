@@ -1,6 +1,7 @@
 import WarningIcon from '@mui/icons-material/Warning';
 import {
 	Button,
+	CircularProgress,
 	FormControl,
 	InputLabel,
 	MenuItem,
@@ -24,16 +25,16 @@ import {
 	Tooltip,
 } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
-import { NYC_Borough } from '../@types/mta-api';
-import { getChartData } from '../api/mta-chart-api';
-import { onDateUpdate } from '../util/events';
 import {
 	BoroughChartData,
 	BoroughChartDatum,
-	flattenBoroughChartData,
-	monthLabels,
-} from '../util/mta-chart';
+	NYC_Borough,
+} from '../@types/mta-api';
+import { getChartData } from '../api/mta-chart-api';
+import { onDateUpdate } from '../util/events';
+import { flattenBoroughChartData, monthLabels } from '../util/mta-chart';
 import MTADataMagnitudeDialog from './dialogs/MTADataMagnitude.dialog';
+import SegmentLoaderBar from './SegmentLoaderBar';
 
 Chart.register(
 	Colors,
@@ -100,6 +101,7 @@ export const MTAChart = () => {
 
 	useEffect(() => {
 		console.debug('init mta chart');
+
 		loadData(new Date('2020-01-01'));
 		const onDateUpdateUnmount = onDateUpdate(({detail: date}) => {
 			const updateYear = new Date(date).getUTCFullYear();
@@ -204,7 +206,25 @@ export const MTAChart = () => {
 						NB: Selecting "all" boroughs may provide a poor experience due to
 						the sheer volume of data, some 450+ stations.
 					</Typography>
-					{loadingState.loading && !loadingState.error && <h2>Loading</h2>}
+					{loadingState.loading && !loadingState.error && (
+						<Stack
+							sx={{margin: '0 auto'}}
+							justifyContent="center"
+							alignItems="center"
+						>
+							<Stack
+								justifyContent="center"
+								alignItems="center"
+								direction="row"
+							>
+								<h2 style={{marginRight: '2rem'}}>
+									Loading... May take several minutes depending on connection
+								</h2>
+								<CircularProgress />
+							</Stack>
+							<SegmentLoaderBar />
+						</Stack>
+					)}
 					{!loadingState.loading && loadingState.error && (
 						<h2>Error loading data</h2>
 					)}

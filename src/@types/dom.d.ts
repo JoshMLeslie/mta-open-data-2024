@@ -3,6 +3,7 @@ interface CustomEventMap {
 	'date-update': CustomEvent<string>;
 	'modal-message': CustomEvent<string>;
 	'stop-animation': Event;
+	'api-loading': CustomEvent<string>;
 }
 declare global {
 	interface Document {

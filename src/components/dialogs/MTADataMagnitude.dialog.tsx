@@ -6,12 +6,12 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import React from 'react';
-import { NYC_Borough } from '../../@types/mta-api';
 import {
 	MagnitudeShift,
 	MagnitudeShiftTracking,
-	prettyPrintRidership,
-} from '../../util/mta-chart';
+	NYC_Borough,
+} from '../../@types/mta-api';
+import { prettyPrintRidership } from '../../util/mta-chart';
 
 const dataGridColumns: GridColDef<MagnitudeShift>[] = [
 	{field: 'stop', headerName: 'Stop'},
@@ -65,7 +65,7 @@ const MTADataMagnitudeDialog: React.FC<Props> = ({
 		<Dialog
 			open={dataManipulatedDialogOpen}
 			onClose={closeDataManipulatedDialog}
-			className='data-manipulation-dialog'
+			className="data-manipulation-dialog"
 		>
 			<DialogTitle>Data Manipulation List for {selectedBorough}</DialogTitle>
 			<DialogContent>

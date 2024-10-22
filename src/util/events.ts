@@ -5,7 +5,8 @@
 /**
  * Type for event listeners that can be unsubscribed from using returned function
  */
-type OnUpdateEvent<CB extends Function> = (callback: CB) => () => void;
+type OnUpdateEvent<CB extends Function = ({detail}: {detail: string}) => any> =
+	(callback: CB) => () => void;
 
 const eDATE_UPDATE = 'date-update';
 /** Date is in format of MM/DD/YYYY */
@@ -13,9 +14,7 @@ export const dispatchDateUpdate = (date: string) => {
 	document.dispatchEvent(new CustomEvent(eDATE_UPDATE, {detail: date}));
 };
 /** Date is in format of MM/DD/YYYY */
-export const onDateUpdate: OnUpdateEvent<
-	({detail}: {detail: string}) => any
-> = (callback) => {
+export const onDateUpdate: OnUpdateEvent = (callback) => {
 	document.addEventListener(eDATE_UPDATE, callback);
 	return () => document.removeEventListener(eDATE_UPDATE, callback);
 };
@@ -51,3 +50,16 @@ export const onStopAnimation: OnUpdateEvent<() => any> = (callback) => {
 // 	document.addEventListener(eBOROUGH_SELECT, callback);
 // 	return () => document.removeEventListener(eBOROUGH_SELECT, callback);
 // };
+
+export const eAPI_LOADING = 'api-loading';
+export const dispatchLoadingUpdate = (
+	eventLabel: string | {eventLabel: string; value: any}
+) => {
+	document.dispatchEvent(new CustomEvent(eAPI_LOADING, {detail: eventLabel}));
+};
+export const onLoadingUpdate: OnUpdateEvent<
+	({detail}: {detail: string | {eventLabel: string; value: any}}) => any
+> = (callback) => {
+	document.addEventListener(eAPI_LOADING, callback);
+	return () => document.removeEventListener(eAPI_LOADING, callback);
+};
