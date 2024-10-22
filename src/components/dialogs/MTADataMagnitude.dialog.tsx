@@ -62,6 +62,7 @@ const MTADataMagnitudeDialog: React.FC<Props> = ({
 		<Dialog
 			open={dataManipulatedDialogOpen}
 			onClose={closeDataManipulatedDialog}
+			className='data-manipulation-dialog'
 		>
 			<DialogTitle>Data Manipulation List</DialogTitle>
 			<DialogContent>

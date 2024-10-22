@@ -25,9 +25,13 @@ import {
 } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import { NYC_Borough } from '../@types/mta-api';
-import { getChartData, GetChartDataReturn } from '../api/mta-chart-api';
+import { getChartData } from '../api/mta-chart-api';
 import { onDateUpdate } from '../util/events';
-import { monthLabels } from '../util/mta-chart';
+import {
+	BoroughChartData,
+	BoroughChartDatum,
+	monthLabels,
+} from '../util/mta-chart';
 import MTADataMagnitudeDialog from './dialogs/MTADataMagnitude.dialog';
 
 Chart.register(
@@ -63,10 +67,11 @@ const chartConfig: ChartOptions = {
 
 export const MTAChart = () => {
 	const [loading, setLoading] = useState(false);
-	const [baseData, setBaseData] = useState<GetChartDataReturn>({});
-	const [selectedData, setSelectedData] =
-		useState<GetChartDataReturn[string]>();
-	const [selectedBorough, setSelectedBorough] = useState(NYC_Borough.MANHATTAN);
+	const [baseData, setBaseData] = useState<BoroughChartData>({});
+	const [selectedData, setSelectedData] = useState<BoroughChartDatum>();
+	const [selectedBorough, setSelectedBorough] = useState<NYC_Borough | 'all'>(
+		NYC_Borough.MANHATTAN
+	);
 	const [dataManipulatedDialogOpen, setDataManipulatedDialogOpen] =
 		useState(false);
 
@@ -128,9 +133,26 @@ export const MTAChart = () => {
 	}, [selectedData]);
 
 	const handleBoroughChange = (e: SelectChangeEvent) => {
-		const borough = e.target.value as NYC_Borough;
+		const borough = e.target.value as NYC_Borough | 'all';
 		setSelectedBorough(borough);
-		setSelectedData(baseData[borough]);
+		if (borough === 'all') {
+			const allBoroughs = Object.values(baseData).reduce<BoroughChartDatum>(
+				(acc, boroughData) => {
+					return {
+						chartData: [...acc.chartData, ...boroughData.chartData],
+						magShiftTracking: [
+							...acc.magShiftTracking,
+							...boroughData.magShiftTracking,
+						],
+					};
+				},
+				{chartData: [], magShiftTracking: []}
+			);
+			console.log(allBoroughs);
+			setSelectedData(allBoroughs);
+		} else {
+			setSelectedData(baseData[borough]);
+		}
 	};
 
 	const openDataManipulatedDialog = () => {
@@ -147,7 +169,7 @@ export const MTAChart = () => {
 				{!selectedData && !loading && <h2>Error loading data</h2>}
 				{selectedData && (
 					<Stack sx={{height: '100%', width: '100%'}}>
-						<Stack direction="row" alignItems="center" sx={{p: 1, gap: '8px'}}>
+						<Stack direction="row" alignItems="center" sx={{gap: '8px'}}>
 							<Typography variant="h1" sx={{fontSize: '2rem'}}>
 								Ridership Changes per Month
 							</Typography>
@@ -172,6 +194,9 @@ export const MTAChart = () => {
 									autoWidth
 									onChange={handleBoroughChange}
 								>
+									<MenuItem key={'all'} value={'all'}>
+										All
+									</MenuItem>
 									{Object.values(NYC_Borough).map((b) => (
 										<MenuItem key={b} value={b}>
 											{b}
@@ -180,14 +205,19 @@ export const MTAChart = () => {
 								</Select>
 							</FormControl>
 						</Stack>
-						<Typography p={1}>
+						<Typography pt={1}>
 							Month to month diff calculated based on cumulative ridership
-							values per line, per station. Positive slopes indicate increase in
-							ridership, negative slope indicates decrease. Zero values indicate
-							no ridership for that time period.
+							values per line, per station.
 						</Typography>
-						<Typography>WIP: MTA data only setup for 2020 currently</Typography>
-
+						<Typography pb={1}>
+							Positive slopes indicate increase in ridership, negative slope
+							indicates decrease. Zero values indicate no ridership for that
+							time period.
+						</Typography>
+						<Typography pb={1}>
+							NB. Selecting "all" boroughs may provide a poor experience due to
+							the sheer volume of data, some 450+ stations.
+						</Typography>
 						<canvas id="ridership-chart" ref={chartElRef}></canvas>
 					</Stack>
 				)}

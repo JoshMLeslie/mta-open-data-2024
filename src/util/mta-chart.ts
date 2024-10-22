@@ -35,6 +35,12 @@ export interface MagnitudeShift {
 }
 export type MagnitudeShiftTracking = MagnitudeShift[];
 
+export interface BoroughChartDatum {
+	chartData: MtaChartSeries;
+	magShiftTracking: MagnitudeShiftTracking;
+}
+export type BoroughChartData = Record<string, BoroughChartDatum>;
+
 export const monthLabels = [
 	'January',
 	'February',
@@ -192,7 +198,7 @@ export const routeDataToBoroughs = (routeData: RouteData) => {
 export const boroughDataToChart = (
 	boroughData: Record<string, RouteData>,
 	startMonth: number
-) => {
+): BoroughChartData => {
 	const boroughChartData: Record<
 		string,
 		{chartData: MtaChartSeries; magShiftTracking: MagnitudeShiftTracking}

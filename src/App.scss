@@ -37,6 +37,8 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	box-sizing: border-box;
+	padding: 1rem;
 
 	#ridership-chart {
 		min-height: 600px;
@@ -48,5 +50,11 @@
 		button.MuiButton-root {
 			height: 56px;
 		}
+	}
+}
+
+.data-manipulation-dialog {
+	.MuiDialog-container > div {
+		max-width: 80vw !important;
 	}
 }
