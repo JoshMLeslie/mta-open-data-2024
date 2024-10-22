@@ -67,36 +67,39 @@ const chartConfig: ChartOptions = {
 };
 
 export const MTAChart = () => {
-	const [loading, setLoading] = useState(false);
-	const [baseData, setBaseData] = useState<BoroughChartData>({});
-	const [selectedData, setSelectedData] = useState<BoroughChartDatum>();
+	const [loadingState, setLoadingState] = useState({
+		loading: true,
+		error: false,
+	});
+	const [baseData, setBaseData] = useState<BoroughChartData | null>(null);
+	const [selectedData, setSelectedData] = useState<BoroughChartDatum | null>(
+		null
+	);
 	const [selectedBorough, setSelectedBorough] = useState<NYC_Borough | 'all'>(
 		NYC_Borough.MANHATTAN
 	);
-	const [dataManipulatedDialogOpen, setDataManipulatedDialogOpen] =
-		useState(false);
+	const [dataManipDialogOpen, setDataManipDialogOpen] = useState(false);
 
 	const chartElRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
 	const selectedYearRef = useRef(2020);
 
 	const loadData = async (startDate: Date) => {
+		setLoadingState({loading: true, error: false});
 		try {
-			const boroughData = await getChartData(startDate);
-			setBaseData(boroughData);
-			setSelectedData(boroughData[NYC_Borough.MANHATTAN]);
+			const baseData = await getChartData(startDate);
+			setBaseData(baseData);
+			setSelectedData(baseData[NYC_Borough.MANHATTAN]);
+			setLoadingState({loading: false, error: false});
 		} catch (e) {
-			setBaseData({});
-			setSelectedData(undefined);
 			console.warn('error while loading mta chart data', e);
-		} finally {
-			setLoading(false);
+			setSelectedData(null);
+			setLoadingState({loading: false, error: true});
 		}
 	};
 
 	useEffect(() => {
 		console.debug('init mta chart');
-		setLoading(true);
 		loadData(new Date('2020-01-01'));
 		const onDateUpdateUnmount = onDateUpdate(({detail: date}) => {
 			const updateYear = new Date(date).getUTCFullYear();
@@ -106,14 +109,12 @@ export const MTAChart = () => {
 			}
 		});
 		return () => {
+			console.log('unmounting');
 			onDateUpdateUnmount();
 		};
-	}, []);
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-	useEffect(() => {
-		if (!selectedData) {
-			return;
-		}
+	const updateChart = (selectedData: BoroughChartDatum) => {
 		if (!chartElRef.current) {
 			console.warn('data loaded without chart element painted');
 			return;
@@ -121,112 +122,106 @@ export const MTAChart = () => {
 		if (chartRef.current) {
 			chartRef.current.data.datasets = selectedData.chartData;
 			chartRef.current.update();
+		} else {
+			chartRef.current = new Chart(chartElRef.current, {
+				type: 'line',
+				options: chartConfig,
+				data: {
+					labels: monthLabels,
+					datasets: selectedData.chartData,
+				},
+			});
+		}
+	};
+
+	useEffect(() => {
+		if (!selectedData) {
 			return;
 		}
-		chartRef.current = new Chart(chartElRef.current, {
-			type: 'line',
-			options: chartConfig,
-			data: {
-				labels: monthLabels,
-				datasets: selectedData.chartData,
-			},
-		});
+		updateChart(selectedData);
 	}, [selectedData]);
 
 	const handleBoroughChange = (e: SelectChangeEvent) => {
 		const borough = e.target.value as NYC_Borough | 'all';
 		setSelectedBorough(borough);
 		if (borough === 'all') {
-			const allBoroughs = Object.values(baseData).reduce<BoroughChartDatum>(
-				(acc, boroughData) => {
-					return {
-						chartData: [...acc.chartData, ...boroughData.chartData],
-						magShiftTracking: [
-							...acc.magShiftTracking,
-							...boroughData.magShiftTracking,
-						],
-					};
-				},
-				{chartData: [], magShiftTracking: []}
-			);
-			console.log(allBoroughs);
 			const allBoroughs = flattenBoroughChartData(baseData!);
 			setSelectedData(allBoroughs);
 		} else {
-			setSelectedData(baseData[borough]);
+			setSelectedData(baseData![borough]);
 		}
-	};
-
-	const openDataManipulatedDialog = () => {
-		setDataManipulatedDialogOpen(true);
-	};
-	const closeDataManipulatedDialog = () => {
-		setDataManipulatedDialogOpen(false);
 	};
 
 	return (
 		<>
 			<div id="mta-chart-container">
-				{!selectedData && loading && <h2>Loading</h2>}
-				{!selectedData && !loading && <h2>Error loading data</h2>}
-				{selectedData && (
-					<Stack sx={{height: '100%', width: '100%'}}>
-						<Stack direction="row" alignItems="center" sx={{gap: '8px'}}>
-							<Typography variant="h1" sx={{fontSize: '2rem'}}>
-								Ridership Changes per Month
-							</Typography>
-							{!!selectedData?.magShiftTracking.length && (
-								<Button
-									sx={{height: '100%'}}
-									variant="outlined"
-									aria-label="notice"
-									startIcon={<WarningIcon />}
-									onClick={openDataManipulatedDialog}
-								>
-									Data Adjusted
-								</Button>
-							)}
-							<FormControl sx={{minWidth: '150px'}}>
-								<InputLabel id="borough-select-label">Borough</InputLabel>
-								<Select
-									labelId="borough-select-label"
-									id="borough-select"
-									value={selectedBorough}
-									label="Borough"
-									autoWidth
-									onChange={handleBoroughChange}
-								>
-									<MenuItem key={'all'} value={'all'}>
-										All
+				<Stack sx={{height: '100%', width: '100%'}}>
+					<Stack direction="row" alignItems="center" sx={{gap: '8px'}}>
+						<Typography variant="h1" sx={{fontSize: '2rem'}}>
+							Ridership Changes per Month
+						</Typography>
+						{!!selectedData?.magShiftTracking.length && (
+							<Button
+								sx={{height: '100%'}}
+								variant="outlined"
+								aria-label="notice"
+								startIcon={<WarningIcon />}
+								onClick={() => setDataManipDialogOpen(true)}
+							>
+								Data Adjusted
+							</Button>
+						)}
+						<FormControl sx={{minWidth: '150px'}}>
+							<InputLabel id="borough-select-label">Borough</InputLabel>
+							<Select
+								labelId="borough-select-label"
+								id="borough-select"
+								value={selectedBorough}
+								label="Borough"
+								autoWidth
+								onChange={handleBoroughChange}
+							>
+								<MenuItem key={'all'} value={'all'}>
+									All
+								</MenuItem>
+								{Object.values(NYC_Borough).map((b) => (
+									<MenuItem key={b} value={b}>
+										{b}
 									</MenuItem>
-									{Object.values(NYC_Borough).map((b) => (
-										<MenuItem key={b} value={b}>
-											{b}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-						</Stack>
-						<Typography pt={1}>
-							Month to month diff calculated based on cumulative ridership
-							values per line, per station.
-						</Typography>
-						<Typography pb={1}>
-							Positive slopes indicate increase in ridership, negative slope
-							indicates decrease. Zero values indicate no ridership for that
-							time period.
-						</Typography>
-						<Typography pb={1}>
-							NB. Selecting "all" boroughs may provide a poor experience due to
-							the sheer volume of data, some 450+ stations.
-						</Typography>
-						<canvas id="ridership-chart" ref={chartElRef}></canvas>
+								))}
+							</Select>
+						</FormControl>
 					</Stack>
-				)}
+					<Typography pt={1}>
+						Month to month diff calculated based on cumulative ridership values
+						per line, per station. Positive slopes indicate increase in
+						ridership, negative slope indicates decrease. Zero values indicate
+						no ridership for that time period. Diffs between years are ignored
+						due to the volume of data and storage complexity involved. May be
+						revisited in future versions.
+					</Typography>
+					<Typography pt={1} pb={1}>
+						NB: Selecting "all" boroughs may provide a poor experience due to
+						the sheer volume of data, some 450+ stations.
+					</Typography>
+					{loadingState.loading && !loadingState.error && <h2>Loading</h2>}
+					{!loadingState.loading && loadingState.error && (
+						<h2>Error loading data</h2>
+					)}
+					<canvas
+						id="ridership-chart"
+						ref={chartElRef}
+						style={{
+							display:
+								!loadingState.loading && !loadingState.error ? 'block' : 'none',
+						}}
+					></canvas>
+				</Stack>
 			</div>
 			<MTADataMagnitudeDialog
-				dataManipulatedDialogOpen={dataManipulatedDialogOpen}
-				closeDataManipulatedDialog={closeDataManipulatedDialog}
+				dataManipulatedDialogOpen={dataManipDialogOpen}
+				closeDataManipulatedDialog={() => setDataManipDialogOpen(false)}
+				selectedBorough={selectedBorough}
 				magShiftTracking={selectedData?.magShiftTracking}
 			/>
 		</>
