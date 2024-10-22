@@ -17,7 +17,12 @@ const dataGridColumns: GridColDef<MagnitudeShift>[] = [
 	{
 		field: 'date',
 		headerName: 'Date',
-		valueFormatter: (d) => new Date(d).toLocaleDateString(),
+		valueFormatter: (d) =>
+			new Date(d).toLocaleDateString(undefined, {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+			}),
 	},
 	{
 		field: 'currentRidership',
@@ -30,10 +35,14 @@ const dataGridColumns: GridColDef<MagnitudeShift>[] = [
 		valueFormatter: (r) => prettyPrintRidership(r),
 	},
 	{field: 'magnitude', headerName: 'Magnitude'},
-	{field: 'magAdjDiff', headerName: 'Adj. Diff'},
 	{
 		field: 'magAdjRidership',
 		headerName: 'Mag. Adj. Ridership',
+		valueFormatter: (r) => prettyPrintRidership(r),
+	},
+	{
+		field: 'magAdjDiff',
+		headerName: 'Adj. Diff',
 		valueFormatter: (r) => prettyPrintRidership(r),
 	},
 ];
