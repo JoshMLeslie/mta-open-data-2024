@@ -2,10 +2,10 @@ import { Button, Stack, Typography } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import { useState } from 'react';
 import '../App.scss';
-import { Animator } from '../components/Animator';
-import { AttachedModal } from '../components/AttachedModal';
-import CovidDataInfoDialog from '../components/dialogs/CovidDataInfo.dialog';
-import MTADataInfoDialog from '../components/dialogs/MTADataInfo.dialog';
+import { Animator } from './Animator';
+import { AttachedModal } from './AttachedModal';
+import CovidDataInfoDialog from './dialogs/CovidDataInfo.dialog';
+import MTADataInfoDialog from './dialogs/MTADataInfo.dialog';
 
 const InfoContainer = () => {
 	const [covidModalOpen, setCovidModalOpen] = useState(false);

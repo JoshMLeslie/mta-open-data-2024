@@ -1,6 +1,26 @@
 #app-container {
 	height: 100%;
 	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.too-small {
+	display: none;
+	position: absolute;
+	margin: 16px;
+}
+
+@media screen and (max-width: 800px) {
+	#app-container *:first-child {
+		opacity: 0;
+	}
+
+	.too-small {
+		display: block;
+	}
 }
 
 .heatmap-textbox {

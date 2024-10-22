@@ -14,7 +14,7 @@ const MTADataInfoDialog: React.FC<{
 			<DialogTitle>MTA Data Info</DialogTitle>
 			<List>
 				<ListItem sx={{display: 'block'}}>
-					Year 2020: The exit numbers reported{' '}
+					For the years 2020, '21, and '22, the exit numbers reported{' '}
 					<a
 						target="_blank"
 						rel="noreferrer"
@@ -42,6 +42,63 @@ const MTADataInfoDialog: React.FC<{
 404631069.6, 403315618.87, 403322207.98, 404320347.18, 403762079.77`}
 						</code>
 					</pre>
+				</ListItem>
+				<ListItem sx={{display: 'block'}}>
+					The following URLs, via https://data.ny.gov/Transportation, are used
+					to fetch the data, leveraging offset / limits to paginate requests -
+					urls open in a new page:
+					<ul style={{marginTop: "8px"}}>
+						<li>
+							2020 - Data set ID:{" "}
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href="https://data.ny.gov/resource/py8k-a8wg.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222020-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222020-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0AORDER%20BY%0A%20%20%60station%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60line_name%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60date%60)%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%200&;"
+							>
+								py8k-a8wg
+							</a>
+						</li>
+						<li>
+							2021 - Data set ID:{" "}
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href="https://data.ny.gov/resource/uu7b-3kff.json?$query=SELECT%0A%20%20%60station%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AWHERE%0A%20%20%60date%60%0A%20%20%20%20BETWEEN%20%222021-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222021-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%20%60station%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0AORDER%20BY%0A%20%20%60station%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60line_name%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60date%60)%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%200&;"
+							>
+								uu7b-3kff
+							</a>
+						</li>
+						<li>
+							2022 - Data set ID:{" "}
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href="https://data.ny.gov/resource/k7j9-jnct.json?$query=SELECT%0A%20%20%60unit%60%2C%0A%20%20%60line_name%60%2C%0A%20%20date_trunc_ym(%60date%60)%20AS%20%60by_month_date%60%2C%0A%20%20avg(%60exits%60)%20AS%20%60avg_exits%60%0AGROUP%20BY%20%60unit%60%2C%20%60line_name%60%2C%20date_trunc_ym(%60date%60)%0AORDER%20BY%0A%20%20%60unit%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60line_name%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60date%60)%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%200&;"
+							>
+								k7j9-jnct
+							</a>
+						</li>
+						<li>
+							2023 - Data set ID:{" "}
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href="https://data.ny.gov/resource/wujg-7c2s.json?$query=SELECT%0A%20%20%60station_complex%60%2C%0A%20%20avg(%60ridership%60)%20AS%20%60avg_ridership%60%2C%0A%20%20%60borough%60%2C%0A%20%20date_trunc_ym(%60transit_timestamp%60)%20AS%20%60by_month_transit_timestamp%60%0AWHERE%0A%20%20%60transit_timestamp%60%0A%20%20%20%20BETWEEN%20%222023-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222023-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%0A%20%20%60station_complex%60%2C%0A%20%20%60borough%60%2C%0A%20%20date_trunc_ym(%60transit_timestamp%60)%0AORDER%20BY%0A%20%20%60station_complex%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60borough%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60transit_timestamp%60)%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%200&;"
+							>
+								wujg-7c2s
+							</a>
+						</li>
+						<li>
+							2024 - Data set ID:{" "}
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href="https://data.ny.gov/resource/wujg-7c2s.json?$query=SELECT%0A%20%20%60station_complex%60%2C%0A%20%20avg(%60ridership%60)%20AS%20%60avg_ridership%60%2C%0A%20%20%60borough%60%2C%0A%20%20date_trunc_ym(%60transit_timestamp%60)%20AS%20%60by_month_transit_timestamp%60%0AWHERE%0A%20%20%60transit_timestamp%60%0A%20%20%20%20BETWEEN%20%222024-01-01T00%3A00%3A00%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20AND%20%222024-12-31T23%3A45%3A00%22%20%3A%3A%20floating_timestamp%0AGROUP%20BY%0A%20%20%60station_complex%60%2C%0A%20%20%60borough%60%2C%0A%20%20date_trunc_ym(%60transit_timestamp%60)%0AORDER%20BY%0A%20%20%60station_complex%60%20ASC%20NULL%20FIRST%2C%0A%20%20%60borough%60%20ASC%20NULL%20FIRST%2C%0A%20%20date_trunc_ym(%60transit_timestamp%60)%20ASC%20NULL%20FIRST%0ALIMIT%20100%0AOFFSET%200&;"
+							>
+								wujg-7c2s
+							</a>
+						</li>
+					</ul>
 				</ListItem>
 			</List>
 		</Dialog>
