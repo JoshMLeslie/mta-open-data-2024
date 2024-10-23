@@ -1,4 +1,12 @@
-import { BoroughChartData, BoroughChartDatum, MagnitudeShift, MagnitudeShiftTracking, MtaChartDatum, MtaChartSeries, RouteData } from '../@types/mta-api';
+import {
+	BoroughChartData,
+	BoroughChartDatum,
+	MagnitudeShift,
+	MagnitudeShiftTracking,
+	MtaChartDatum,
+	MtaChartSeries,
+	RouteData,
+} from '../@types/mta-api';
 import LineData2020ToBorough from './mta/line-data-2020-to-borough';
 
 export const monthLabels = [
@@ -42,7 +50,7 @@ const getDiffInRidershipOverMonth = (
 	for (let date in ridershipData) {
 		const currentRidership = ridershipData[date];
 		if (prevRidership !== 0) {
-			let magAdjDiff = 0;
+			let adjDiff = 0;
 			const basicMonthlyDiff = currentRidership - prevRidership;
 			/*
 				The numbers reported are defined as cumulative, but straight processing
@@ -52,7 +60,7 @@ const getDiffInRidershipOverMonth = (
 				clamp to positive values
 			*/
 			if (basicMonthlyDiff > 0) {
-				magAdjDiff = basicMonthlyDiff;
+				adjDiff = basicMonthlyDiff;
 			}
 			/*
 				Continuing with the "reinitialized value changes wildly" theory:
@@ -67,18 +75,18 @@ const getDiffInRidershipOverMonth = (
 				]
 			*/
 			let magnitude = currentRidership / prevRidership;
-			if (magnitude > 9) {
+			if (magnitude > 9 || basicMonthlyDiff > 10000000) {
 				while (Math.round(magnitude) % 10 !== 0) {
 					magnitude++;
 				}
 				const magAdjRidership = currentRidership / magnitude;
-				magAdjDiff = Math.abs(magAdjRidership - prevRidership);
+				adjDiff = Math.abs(magAdjRidership - prevRidership);
 
 				const magShift: MagnitudeShift = {
 					id: `${stop}-${date}`,
 					stop,
 					date,
-					magAdjDiff: +magAdjDiff.toFixed(2),
+					magAdjDiff: +adjDiff.toFixed(2),
 					magAdjRidership,
 					currentRidership,
 					magnitude: +magnitude.toFixed(2),
@@ -87,7 +95,7 @@ const getDiffInRidershipOverMonth = (
 				magShiftTracking.push(magShift);
 				console.warn('magnitude shift', magShift);
 			}
-			diff.push(magAdjDiff);
+			diff.push(adjDiff);
 		}
 		prevRidership = currentRidership;
 	}
@@ -115,7 +123,6 @@ export const routeDataToChartData = (
 						label
 					);
 					totalMagShiftTracking.push(...magShiftTracking);
-
 					// since we're diffing over months, pad one null into the front
 					diff.unshift(null);
 					while (diff.length < 12) {

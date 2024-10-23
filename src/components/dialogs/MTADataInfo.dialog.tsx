@@ -43,13 +43,20 @@ const MTADataInfoDialog: React.FC<{
 						</code>
 					</pre>
 				</ListItem>
+				<ListItem>
+					That all said, some still sneak thru and I'm not sure how much of this
+					is due to human error vs. system error (e.g. API changes). The next
+					step would be to reach out to the data provider for more context, but
+					that might take some time and in the meantime I'm wrapping up my
+					current efforts.
+				</ListItem>
 				<ListItem sx={{display: 'block'}}>
 					The following URLs, via https://data.ny.gov/Transportation, are used
 					to fetch the data, leveraging offset / limits to paginate requests -
 					urls open in a new page:
-					<ul style={{marginTop: "8px"}}>
+					<ul style={{marginTop: '8px'}}>
 						<li>
-							2020 - Data set ID:{" "}
+							2020 - Data set ID:{' '}
 							<a
 								target="_blank"
 								rel="noreferrer"
@@ -59,7 +66,7 @@ const MTADataInfoDialog: React.FC<{
 							</a>
 						</li>
 						<li>
-							2021 - Data set ID:{" "}
+							2021 - Data set ID:{' '}
 							<a
 								target="_blank"
 								rel="noreferrer"
@@ -69,7 +76,7 @@ const MTADataInfoDialog: React.FC<{
 							</a>
 						</li>
 						<li>
-							2022 - Data set ID:{" "}
+							2022 - Data set ID:{' '}
 							<a
 								target="_blank"
 								rel="noreferrer"
@@ -79,7 +86,7 @@ const MTADataInfoDialog: React.FC<{
 							</a>
 						</li>
 						<li>
-							2023 - Data set ID:{" "}
+							2023 - Data set ID:{' '}
 							<a
 								target="_blank"
 								rel="noreferrer"
@@ -89,7 +96,7 @@ const MTADataInfoDialog: React.FC<{
 							</a>
 						</li>
 						<li>
-							2024 - Data set ID:{" "}
+							2024 - Data set ID:{' '}
 							<a
 								target="_blank"
 								rel="noreferrer"

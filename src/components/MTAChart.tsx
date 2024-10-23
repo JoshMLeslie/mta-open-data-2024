@@ -1,8 +1,10 @@
 import WarningIcon from '@mui/icons-material/Warning';
 import {
 	Button,
+	Checkbox,
 	CircularProgress,
 	FormControl,
+	FormControlLabel,
 	InputLabel,
 	MenuItem,
 	Select,
@@ -80,11 +82,13 @@ export const MTAChart = () => {
 		NYC_Borough.MANHATTAN
 	);
 	const [dataManipDialogOpen, setDataManipDialogOpen] = useState(false);
+	const [useAverageYMax, setUseAverageYMax] = useState(true);
 
 	const chartElRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
 	const selectedYearRef = useRef(2020);
 	const preloadRef = useRef<Record<string, boolean>>({});
+	const averageYMaxRef = useRef(0);
 
 	const preloadData = async (startDate: Date) => {
 		getChartData(startDate);
@@ -133,13 +137,34 @@ export const MTAChart = () => {
 			console.warn('data loaded without chart element painted');
 			return;
 		}
+		// get current chart avg to cut off errant high values
+		const chartYMax = selectedData.chartData.reduce((acc, station) => {
+			const stationTotal = station.data.reduce(
+				(ac, v) => (v ? (ac! += v) : ac),
+				0
+			);
+			return stationTotal ? Math.max(acc, stationTotal / 11) : acc;
+		}, 0);
+
+		averageYMaxRef.current = chartYMax;
+
 		if (chartRef.current) {
 			chartRef.current.data.datasets = selectedData.chartData;
+			if (useAverageYMax) {
+				chartRef.current.options!.scales!.y!.max = chartYMax;
+			}
 			chartRef.current.update();
 		} else {
 			chartRef.current = new Chart(chartElRef.current, {
 				type: 'line',
-				options: chartConfig,
+				options: {
+					...chartConfig,
+					scales: {
+						y: {
+							max: chartYMax,
+						},
+					},
+				},
 				data: {
 					labels: monthLabels,
 					datasets: selectedData.chartData,
@@ -154,6 +179,18 @@ export const MTAChart = () => {
 		}
 		updateChart(selectedData);
 	}, [selectedData]);
+
+	useEffect(() => {
+		if (!chartRef.current) {
+			return;
+		}
+		if (useAverageYMax) {
+			chartRef.current.options!.scales!.y!.max = averageYMaxRef.current;
+		} else {
+			chartRef.current.options!.scales!.y!.max = undefined;
+		}
+		chartRef.current.update();
+	}, [useAverageYMax]);
 
 	const handleBoroughChange = (e: SelectChangeEvent) => {
 		const borough = e.target.value as NYC_Borough | 'all';
@@ -174,6 +211,23 @@ export const MTAChart = () => {
 						<Typography variant="h1" sx={{fontSize: '2rem'}}>
 							Ridership Changes per Month
 						</Typography>
+						<FormControlLabel
+							sx={{
+								border: '1px solid rgba(0, 0, 0, .25)',
+								margin: 0,
+								padding: '0 8px',
+								borderRadius: '4px',
+								textAlign: 'center',
+							}}
+							label="Use Avg Y&nbsp;Max"
+							labelPlacement="bottom"
+							control={
+								<Checkbox
+									checked={useAverageYMax}
+									onChange={(e) => setUseAverageYMax(e.target.checked)}
+								/>
+							}
+						/>
 						{!!selectedData?.magShiftTracking.length && (
 							<Button
 								sx={{height: '100%'}}
@@ -205,6 +259,7 @@ export const MTAChart = () => {
 								))}
 							</Select>
 						</FormControl>
+						NB: Selecting "all" boroughs is dicey due to the 450+ stations.
 					</Stack>
 					<Typography pt={1}>
 						Month to month diff calculated based on cumulative ridership values
@@ -212,11 +267,8 @@ export const MTAChart = () => {
 						ridership, negative slope indicates decrease. Zero values indicate
 						no ridership for that time period. Diffs between years are ignored
 						due to the volume of data and storage complexity involved. May be
-						revisited in future versions.
-					</Typography>
-					<Typography pt={1} pb={1}>
-						NB: Selecting "all" boroughs may provide a poor experience due to
-						the sheer volume of data, some 450+ stations.
+						revisited in future versions. The chart Y-Max is set to the average
+						for that borough, to cut off the wild values that sneak thru.
 					</Typography>
 					{loadingState.loading && !loadingState.error && (
 						<Stack
