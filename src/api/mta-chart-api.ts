@@ -144,8 +144,6 @@ export const getChartData = async (
 		throw new Error(e || 'chart api error');
 	}
 
-	console.log(routeData);
-
 	const boroughData = routeDataToBoroughs(routeData);
 	const boroughChartData = boroughDataToChart(
 		boroughData,
