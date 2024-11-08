@@ -1,6 +1,6 @@
 import WarningIcon from '@mui/icons-material/Warning';
+import LoadingButton from '@mui/lab/LoadingButton';
 import {
-	Button,
 	Checkbox,
 	CircularProgress,
 	FormControl,
@@ -81,6 +81,7 @@ export const MTAChart = () => {
 	const [selectedBorough, setSelectedBorough] = useState<NYC_Borough | 'all'>(
 		NYC_Borough.MANHATTAN
 	);
+	const [dataManipDialogLoading, setDataManipDialogLoading] = useState(false);
 	const [dataManipDialogOpen, setDataManipDialogOpen] = useState(false);
 	const [useAverageYMax, setUseAverageYMax] = useState(true);
 
@@ -107,6 +108,10 @@ export const MTAChart = () => {
 			setLoadingState({loading: false, error: true});
 		}
 	};
+
+	useEffect(() => {
+		setDataManipDialogOpen(dataManipDialogLoading);
+	}, [dataManipDialogLoading]);
 
 	useEffect(() => {
 		console.debug('init mta chart');
@@ -229,15 +234,16 @@ export const MTAChart = () => {
 							}
 						/>
 						{!!selectedData?.magShiftTracking.length && (
-							<Button
+							<LoadingButton
+								loading={dataManipDialogLoading}
 								sx={{height: '100%'}}
 								variant="outlined"
 								aria-label="notice"
 								startIcon={<WarningIcon />}
-								onClick={() => setDataManipDialogOpen(true)}
+								onClick={() => setDataManipDialogLoading(true)}
 							>
 								Data Adjusted
-							</Button>
+							</LoadingButton>
 						)}
 						<FormControl sx={{minWidth: '150px'}}>
 							<InputLabel id="borough-select-label">Borough</InputLabel>
@@ -304,7 +310,7 @@ export const MTAChart = () => {
 			</div>
 			<MTADataMagnitudeDialog
 				dataManipulatedDialogOpen={dataManipDialogOpen}
-				closeDataManipulatedDialog={() => setDataManipDialogOpen(false)}
+				closeDataManipulatedDialog={() => setDataManipDialogLoading(false)}
 				selectedBorough={selectedBorough}
 				magShiftTracking={selectedData?.magShiftTracking}
 			/>
