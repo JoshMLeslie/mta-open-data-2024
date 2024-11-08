@@ -80,6 +80,8 @@ export type MagnitudeShiftTracking = MagnitudeShift[];
 export interface BoroughChartDatum {
 	chartData: MtaChartSeries;
 	magShiftTracking: MagnitudeShiftTracking;
+	avgYMax: number;
+	yMax: number;
 }
 export type BoroughChartData = Record<string, BoroughChartDatum>;
 

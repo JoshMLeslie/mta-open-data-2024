@@ -35,7 +35,7 @@ const DateList = createWeeklyDates('03/07/2020'); // hardcoded from NYC covid da
 
 function ValueLabelComponent({children, value}: SliderValueLabelProps) {
 	return (
-		<Tooltip enterTouchDelay={0} placement="top" title={DateList[value]}>
+		<Tooltip enterTouchDelay={0} placement="top" title={DateList[value as number]}>
 			{children}
 		</Tooltip>
 	);

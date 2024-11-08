@@ -26,6 +26,7 @@ import {
 	PointElement,
 	Tooltip,
 } from 'chart.js';
+import Annotation, { LineAnnotationOptions } from 'chartjs-plugin-annotation';
 import { useEffect, useRef, useState } from 'react';
 import {
 	BoroughChartData,
@@ -47,26 +48,39 @@ Chart.register(
 	PointElement,
 	CategoryScale,
 	LinearScale,
+	Annotation,
 	Tooltip,
 	Legend
 );
 
+const chartLineOptions: LineAnnotationOptions = {
+	borderColor: 'rgb(100, 230, 255)',
+	borderWidth: 4,
+	borderShadowColor: 'rgb(0,0,0)',
+	shadowOffsetY: 4,
+	shadowBlur: 4,
+	xMin: 1,
+	xMax: 1,
+	yMin: 0,
+};
+
+const chartPluginOptions: ChartOptions['plugins'] = {
+	legend: {
+		position: 'bottom',
+	},
+	title: {
+		display: true,
+		text: 'Ridership data',
+	},
+	tooltip: {
+		intersect: true,
+		mode: 'point',
+	},
+};
+
 const chartConfig: ChartOptions = {
 	responsive: true,
 	maintainAspectRatio: false,
-	plugins: {
-		legend: {
-			position: 'bottom',
-		},
-		title: {
-			display: true,
-			text: 'Ridership data',
-		},
-		tooltip: {
-			intersect: true,
-			mode: 'point',
-		},
-	},
 };
 
 export const MTAChart = () => {
@@ -88,9 +102,9 @@ export const MTAChart = () => {
 	const chartElRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
 	const selectedYearRef = useRef(2020);
-	const selectedMonthRef = useRef(1);
+	const selectedMonthRef = useRef(2); // indexed-0; start at 3 (Mar) due to averaging
 	const preloadRef = useRef<Record<string, boolean>>({});
-	const averageYMaxRef = useRef(0);
+	const chartYRef = useRef({max: 0, avg: 0});
 
 	const preloadData = async (startDate: Date) => {
 		getChartData(startDate);
@@ -122,6 +136,13 @@ export const MTAChart = () => {
 		if (!chartRef) {
 			return;
 		}
+		(
+			chartRef.current!.options.plugins!.annotation!.annotations! as any
+		).line1.xMin = drawMonth;
+		(
+			chartRef.current!.options.plugins!.annotation!.annotations! as any
+		).line1.xMax = drawMonth;
+		chartRef.current?.update();
 	};
 
 	useEffect(() => {
@@ -132,7 +153,7 @@ export const MTAChart = () => {
 			const now = new Date();
 			const d = new Date(date);
 			const incomingYear = d.getUTCFullYear();
-			const incomingMonth = d.getUTCMonth() + 1; // 1-indexed months
+			const incomingMonth = d.getUTCMonth(); // 0-indexed months
 			const nextYear = incomingYear + 1;
 
 			if (selectedYearRef.current !== incomingYear) {
@@ -159,27 +180,31 @@ export const MTAChart = () => {
 		};
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+	const updateChartYMax = () => {
+		if (!chartRef.current) {
+			return;
+		}
+		const useYMax = useAverageYMax
+			? chartYRef.current.avg
+			: chartYRef.current.max;
+		chartRef.current.options!.scales!.y!.max = useYMax;
+		(
+			chartRef.current!.options.plugins!.annotation!.annotations! as any
+		).line1.yMax = useYMax;
+	};
+
 	const updateChart = (selectedData: BoroughChartDatum) => {
 		if (!chartElRef.current) {
 			console.warn('data loaded without chart element painted');
 			return;
 		}
-		// get current chart avg to cut off errant high values
-		const chartYMax = selectedData.chartData.reduce((acc, station) => {
-			const stationTotal = station.data.reduce(
-				(ac, v) => (v ? (ac! += v) : ac),
-				0
-			);
-			return stationTotal ? Math.max(acc, stationTotal / 11) : acc;
-		}, 0);
 
-		averageYMaxRef.current = chartYMax;
-
+		const chartAvgYMax = selectedData.avgYMax;
+		const chartYMax = selectedData.yMax;
+		chartYRef.current = {avg: chartAvgYMax, max: chartYMax};
 		if (chartRef.current) {
 			chartRef.current.data.datasets = selectedData.chartData;
-			if (useAverageYMax) {
-				chartRef.current.options!.scales!.y!.max = chartYMax;
-			}
+			updateChartYMax();
 			chartRef.current.update();
 		} else {
 			chartRef.current = new Chart(chartElRef.current, {
@@ -188,7 +213,19 @@ export const MTAChart = () => {
 					...chartConfig,
 					scales: {
 						y: {
-							max: chartYMax,
+							max: chartAvgYMax,
+						},
+					},
+					plugins: {
+						...chartPluginOptions,
+						annotation: {
+							annotations: {
+								line1: {
+									...chartLineOptions,
+									type: 'line',
+									yMax: chartAvgYMax,
+								},
+							},
 						},
 					},
 				},
@@ -211,13 +248,9 @@ export const MTAChart = () => {
 		if (!chartRef.current) {
 			return;
 		}
-		if (useAverageYMax) {
-			chartRef.current.options!.scales!.y!.max = averageYMaxRef.current;
-		} else {
-			chartRef.current.options!.scales!.y!.max = undefined;
-		}
+		updateChartYMax();
 		chartRef.current.update();
-	}, [useAverageYMax]);
+	}, [useAverageYMax]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleBoroughChange = (e: SelectChangeEvent) => {
 		const borough = e.target.value as NYC_Borough | 'all';

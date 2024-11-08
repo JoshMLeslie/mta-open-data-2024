@@ -105,12 +105,14 @@ const getDiffInRidershipOverMonth = (
 export const routeDataToChartData = (
 	routeData: RouteData,
 	startMonth: number
-) => {
+): BoroughChartDatum => {
 	const totalMagShiftTracking: MagnitudeShiftTracking = [];
 	let chartData: MtaChartSeries = [];
 
 	// who's the dumbass who started months at 0 instead of 1?
 
+	let avgYMax = 0;
+	let yMax = 0;
 	for (const station in routeData) {
 		if (routeData.hasOwnProperty(station)) {
 			const stationData = routeData[station];
@@ -136,12 +138,33 @@ export const routeDataToChartData = (
 						label: label,
 						data: diff,
 					});
+
+					// eslint-disable-next-line no-loop-func
+					let localAvgYMax = diff.reduce<number>((acc, v) => {
+						if (v) {
+							yMax = Math.max(yMax, v);
+							return (acc += v);
+						} else {
+							return acc || 0;
+						}
+					}, 0);
+					localAvgYMax |= 0;
+					localAvgYMax /= 11; // 11 months
+
+					avgYMax = Math.max(avgYMax, localAvgYMax);
 				}
 			}
 		}
 	}
 
-	return {chartData, magShiftTracking: totalMagShiftTracking};
+	console.log(avgYMax);
+
+	return {
+		chartData,
+		magShiftTracking: totalMagShiftTracking,
+		avgYMax,
+		yMax,
+	};
 };
 
 export const routeDataToBoroughs = (routeData: RouteData) => {
@@ -166,10 +189,7 @@ export const boroughDataToChart = (
 	boroughData: Record<string, RouteData>,
 	startMonth: number
 ): BoroughChartData => {
-	const boroughChartData: Record<
-		string,
-		{chartData: MtaChartSeries; magShiftTracking: MagnitudeShiftTracking}
-	> = {};
+	const boroughChartData: BoroughChartData = {};
 	for (const boroughLabel in boroughData) {
 		if (boroughData.hasOwnProperty(boroughLabel)) {
 			const boroughDatum = boroughData[boroughLabel];
@@ -191,8 +211,10 @@ export const flattenBoroughChartData = (allBoroughs: BoroughChartData) => {
 					...acc.magShiftTracking,
 					...boroughData.magShiftTracking,
 				],
+				avgYMax: Math.max(acc.yMax, boroughData.yMax),
+				yMax: Math.max(acc.yMax, boroughData.yMax),
 			};
 		},
-		{chartData: [], magShiftTracking: []}
+		{chartData: [], magShiftTracking: [], avgYMax: 0, yMax: 0}
 	);
 };
