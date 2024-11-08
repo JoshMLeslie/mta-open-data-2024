@@ -65,12 +65,13 @@ const apiDataByYear: AccessData = {
 
 export const getChartData = async (
 	accessDate: Date
-): Promise<BoroughChartData> => {
+): Promise<BoroughChartData | null> => {
 	const accessDateString = accessDate
 		.toISOString()
 		.split('T')[0] as keyof typeof apiDataByYear;
 	if (!(accessDateString in apiDataByYear)) {
-		throw new Error(`No data configured for date ${accessDateString}`);
+		console.warn(`No data configured for date ${accessDateString}`)
+		return Promise.resolve(null);
 	}
 	let routeData: RouteData = {};
 	const apiYearDatum = apiDataByYear[accessDateString];

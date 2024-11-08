@@ -88,6 +88,7 @@ export const MTAChart = () => {
 	const chartElRef = useRef<HTMLCanvasElement>(null);
 	const chartRef = useRef<Chart | null>(null);
 	const selectedYearRef = useRef(2020);
+	const selectedMonthRef = useRef(1);
 	const preloadRef = useRef<Record<string, boolean>>({});
 	const averageYMaxRef = useRef(0);
 
@@ -99,6 +100,10 @@ export const MTAChart = () => {
 		setLoadingState({loading: true, error: false});
 		try {
 			const baseData = await getChartData(startDate);
+			if (!baseData) {
+				setLoadingState({loading: false, error: false});
+				return;
+			}
 			setBaseData(baseData);
 			setSelectedData(baseData[NYC_Borough.MANHATTAN]);
 			setLoadingState({loading: false, error: false});
@@ -113,27 +118,44 @@ export const MTAChart = () => {
 		setDataManipDialogOpen(dataManipDialogLoading);
 	}, [dataManipDialogLoading]);
 
+	const selectMonthOnChart = (drawMonth: number) => {
+		if (!chartRef) {
+			return;
+		}
+	};
+
 	useEffect(() => {
 		console.debug('init mta chart');
 
 		loadData(new Date('2020-01-01'));
-		const onDateUpdateUnmount = onDateUpdate(({detail: date}) => {
+		const unmountDateUpdate = onDateUpdate(({detail: date}) => {
+			const now = new Date();
 			const d = new Date(date);
 			const incomingYear = d.getUTCFullYear();
-			const incomingMonth = d.getUTCMonth();
+			const incomingMonth = d.getUTCMonth() + 1; // 1-indexed months
 			const nextYear = incomingYear + 1;
 
 			if (selectedYearRef.current !== incomingYear) {
 				loadData(new Date(`${incomingYear}-01-01`));
 				selectedYearRef.current = incomingYear;
-			} else if (incomingMonth >= 6 && !preloadRef.current[nextYear]) {
+			}
+			if (selectedMonthRef.current !== incomingMonth) {
+				selectedMonthRef.current = incomingMonth;
+				selectMonthOnChart(incomingMonth);
+			}
+
+			if (
+				incomingMonth >= 3 &&
+				nextYear <= now.getFullYear() &&
+				!preloadRef.current[nextYear]
+			) {
 				preloadData(new Date(`${nextYear}-01-01`));
 				preloadRef.current[nextYear] = true;
 			}
 		});
 		return () => {
 			console.log('unmounting');
-			onDateUpdateUnmount();
+			unmountDateUpdate();
 		};
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -183,7 +205,7 @@ export const MTAChart = () => {
 			return;
 		}
 		updateChart(selectedData);
-	}, [selectedData]);
+	}, [selectedData]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
 		if (!chartRef.current) {
